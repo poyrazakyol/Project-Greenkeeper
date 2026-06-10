@@ -1,16 +1,18 @@
+using Greenkeeper.Pitch;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Greenkeeper.Debugging
 {
     /// <summary>
-    /// Minimal performance HUD (TDD §11, F2): smoothed frame time + FPS.
-    /// Toggled with F2; visible by default so the F0.1 60 FPS check is immediate.
-    /// GPU/tick/stamp counters are added in their own blocks (F0.2+).
+    /// Minimal performance HUD (TDD §11, F2): smoothed frame time + FPS, plus
+    /// the pitch tick cost when a PitchController is wired (budget 0.5 ms,
+    /// TDD §1.3). Toggled with F2. GPU/stamp counters arrive in later blocks.
     /// </summary>
     public sealed class PerfHud : MonoBehaviour
     {
         [SerializeField] private bool _visible = true;
+        [SerializeField] private PitchController _pitch;
 
         private float _smoothedDeltaTime;
 
@@ -37,8 +39,13 @@ namespace Greenkeeper.Debugging
 
             float ms = _smoothedDeltaTime * 1000f;
             float fps = 1f / _smoothedDeltaTime;
-            GUI.Box(new Rect(8f, 8f, 220f, 24f), GUIContent.none);
-            GUI.Label(new Rect(14f, 11f, 210f, 20f), $"Frame {ms:F2} ms  ({fps:F0} FPS)  [F2]");
+            string line = $"Frame {ms:F2} ms  ({fps:F0} FPS)  [F2]";
+            if (_pitch != null && _pitch.TickCount > 0)
+            {
+                line += $"   Tick {_pitch.LastTickMs:F3} ms / 0.5";
+            }
+            GUI.Box(new Rect(8f, 8f, 380f, 24f), GUIContent.none);
+            GUI.Label(new Rect(14f, 11f, 370f, 20f), line);
         }
     }
 }

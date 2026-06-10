@@ -1,6 +1,7 @@
 using Greenkeeper.Core;
 using Greenkeeper.Debugging;
 using Greenkeeper.Gameplay;
+using Greenkeeper.Pitch;
 using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -11,11 +12,13 @@ using UnityEngine.SceneManagement;
 namespace Greenkeeper.EditorTools
 {
     /// <summary>
-    /// Builds the F0.1 deliverables from code: ground material, Player prefab,
-    /// Boot and Stadium scenes, and the build scene list. Idempotent — running
-    /// it again regenerates the same assets in place.
+    /// Builds the generated project assets from code: ground material, stadium
+    /// definition, Player prefab, Boot and Stadium scenes, and the build scene
+    /// list. Cumulative across blocks (F0.1: scenes + player; F0.2: pitch grid
+    /// host + F1 overlay). Idempotent — assets are regenerated in place and
+    /// existing SO asset values are preserved.
     /// </summary>
-    public static class F01SceneBuilder
+    public static class StadiumSceneBuilder
     {
         private const string ScenesDir = "Assets/_Project/Scenes";
         private const string PrefabsDir = "Assets/_Project/Prefabs";
@@ -23,11 +26,13 @@ namespace Greenkeeper.EditorTools
         private const string GroundMaterialPath = ArtDir + "/Pitch_Ground.mat";
         private const string PlayerPrefabPath = PrefabsDir + "/Player.prefab";
         private const string InputActionsPath = "Assets/_Project/Settings/Greenkeeper.inputactions";
+        private const string StadiumDefinitionPath = "Assets/_Project/Data/Stadium_Default.asset";
 
-        [MenuItem("Greenkeeper/Build F0.1 Scenes")]
+        [MenuItem("Greenkeeper/Build Stadium Scene")]
         public static void Build()
         {
             Material groundMaterial = CreateOrUpdateGroundMaterial();
+            EnsureStadiumDefinitionAsset();
             GameObject playerPrefab = CreatePlayerPrefab();
             CreateBootScene();
             CreateStadiumScene(groundMaterial, playerPrefab);
@@ -39,7 +44,25 @@ namespace Greenkeeper.EditorTools
             };
 
             AssetDatabase.SaveAssets();
-            UnityEngine.Debug.Log("[Greenkeeper] F0.1 scenes, prefab and build settings generated.");
+            UnityEngine.Debug.Log("[Greenkeeper] Stadium scene, prefab and build settings generated.");
+        }
+
+        private static void EnsureStadiumDefinitionAsset()
+        {
+            // Create-if-missing only: designer-tuned values in the asset are
+            // never overwritten by the builder (data lives in the SO, TDD §1.2).
+            Object main = AssetDatabase.LoadMainAssetAtPath(StadiumDefinitionPath);
+            UnityEngine.Debug.Log("[Greenkeeper] Stadium definition probe: " +
+                (main == null ? "not found" : $"type={main.GetType().FullName}"));
+
+            if (AssetDatabase.LoadAssetAtPath<StadiumDefinitionSO>(StadiumDefinitionPath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<StadiumDefinitionSO>(), StadiumDefinitionPath);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.ImportAsset(StadiumDefinitionPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Stadium definition created at " + StadiumDefinitionPath);
+            }
         }
 
         private static Material CreateOrUpdateGroundMaterial()
@@ -139,9 +162,42 @@ namespace Greenkeeper.EditorTools
             fpCamera.AddComponent<CinemachineRotateWithFollowTarget>();
             cinemachineCamera.Follow = cameraTarget;
 
-            new GameObject("Debug_PerfHud").AddComponent<PerfHud>();
+            // Pitch grid host (F0.2). The stadium asset is loaded here, AFTER
+            // NewScene: single-mode scene creation unloads unused assets, so a
+            // reference held from before that call goes fake-null.
+            var stadiumDefinition = AssetDatabase.LoadAssetAtPath<StadiumDefinitionSO>(StadiumDefinitionPath);
+
+            var pitchGo = new GameObject("Pitch");
+            PitchController pitchController = pitchGo.AddComponent<PitchController>();
+            SetReference(pitchController, "_stadium", stadiumDefinition);
+
+            PerfHud perfHud = new GameObject("Debug_PerfHud").AddComponent<PerfHud>();
+            SetReference(perfHud, "_pitch", pitchController);
+
+            PitchGridOverlay overlay = new GameObject("Debug_PitchOverlay").AddComponent<PitchGridOverlay>();
+            SetReference(overlay, "_pitch", pitchController);
 
             EditorSceneManager.SaveScene(scene, ScenesDir + "/Stadium.unity");
+        }
+
+        private static void SetReference(Object target, string fieldName, Object value)
+        {
+            if (value == null)
+            {
+                throw new System.InvalidOperationException(
+                    $"Refusing to write a null reference into {target.GetType().Name}.{fieldName} — " +
+                    "the source object is missing or was invalidated by a reimport.");
+            }
+
+            var serialized = new SerializedObject(target);
+            SerializedProperty property = serialized.FindProperty(fieldName);
+            if (property == null)
+            {
+                throw new System.InvalidOperationException(
+                    $"Serialized field '{fieldName}' not found on {target.GetType().Name}.");
+            }
+            property.objectReferenceValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 }

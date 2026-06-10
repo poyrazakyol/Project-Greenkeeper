@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a11b69987758c2045b5fd44e40b68b17, type: 3}
+  m_Name: Stadium_Default
+  m_EditorClassIdentifier: Greenkeeper.Pitch::Greenkeeper.Pitch.StadiumDefinitionSO
+  pitchLengthM: 105
+  pitchWidthM: 68
+  cellSizeM: 0.5
+  gridWidth: 212
+  gridHeight: 140
+  initialGrassHeightMm: 45
+  initialHealth: 70
+  initialMoisture: 55
+  grassHeightJitterMm: 6
+  initialStateSeed: 1337

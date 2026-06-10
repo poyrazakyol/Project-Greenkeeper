@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Doküman Sürümü** | v1.0 |
+| **Doküman Sürümü** | v1.1 |
 | **Tarih** | 9 Haziran 2026 |
 | **Bağlı Doküman** | GDD v1.1 (tasarım otoritesi) |
 | **Geliştirici** | Poyraz — solo proje |
@@ -274,6 +274,51 @@ public abstract class EventChannelSO<T> : ScriptableObject {
 | `GrassGrowthProfileSO` | Büyüme eğrisi parametreleri (mevsim/sağlık/nem fonksiyonu) | MVP |
 | `WeatherPatternSO` | Hava olasılık tabloları, etki çarpanları | Faz 2 |
 | `PatternRequestSO` | Desen tanımı + eşleşme değerlendirme parametreleri | Faz 2 |
+
+#### LeagueStandardSO — Referans Değerler (IFAB / FIFA)
+
+Her kademe için bir asset üretilir. Değerler GDD §1.5'ten alınır:
+
+```csharp
+// Örnek alan yapısı
+[CreateAssetMenu(menuName = "Greenkeeper/League Standard")]
+public class LeagueStandardSO : ScriptableObject {
+    public string leagueName;
+    public int tier;                      // 1–5
+    public float grassHeightMinMm;        // alt sınır
+    public float grassHeightMaxMm;        // üst sınır
+    public float grassHeightToleranceMm;  // denetçi toleransı
+    public float lineDeviationMaxCm;      // çizgi sapma toleransı (cm)
+    public int inspectionSampleCount;     // denetçi örneklem noktası sayısı
+    // ... denetim kalemleri listesi
+}
+```
+
+| Kademe | `grassHeightMin` | `grassHeightMax` | `toleranceMm` | `lineDeviationMaxCm` | `sampleCount` |
+|---|---|---|---|---|---|
+| 1 Amatör | 25 mm | 50 mm | ±10 mm | 5 cm | 5 |
+| 2 3. Lig | 20 mm | 35 mm | ±5 mm | 3 cm | 10 |
+| 3 2./1. Lig | 20 mm | 30 mm | ±3 mm | 2 cm | 15 |
+| 4 Süper Lig | 20 mm | 25 mm | ±2 mm | 1 cm | 20 |
+| 5 Milli/Avrupa | 20 mm | 25 mm | ±1 mm | 0.5 cm | 25 |
+
+#### LineLayoutSO — Referans Değerler (IFAB / FIFA)
+
+Tek asset; saha boyutu 105×68 m sabittir. Tüm ölçüler FIFA zorunlu turnuva standardından alınmıştır:
+
+```
+Saha: 105 × 68 m
+Çizgi genişliği: 12 cm (tüm çizgiler)
+Ceza sahası: 40.32 × 16.5 m (her iki kale)
+Kale sahası: 18.32 × 5.5 m (her iki kale)
+Orta yuvarlak r: 9.15 m
+Penaltı noktası: 11 m (kale çizgisinden)
+Ceza yayı r: 9.15 m (penaltı noktasından)
+Korner yayı r: 1 m
+Kale: 7.32 m genişlik / 2.44 m yükseklik
+```
+
+`LineLayoutSO`, bu değerlerden **saha merkezine göre parametrik segment + yay listesi** üretir. Oyuncu çizgi çekerken bu geometri ideal referans olarak kullanılır; sapma bu referansa göre hesaplanır.
 
 ---
 

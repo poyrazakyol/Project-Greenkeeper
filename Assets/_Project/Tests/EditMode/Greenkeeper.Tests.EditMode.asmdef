@@ -3,7 +3,9 @@
     "rootNamespace": "Greenkeeper.Tests",
     "references": [
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Greenkeeper.Pitch",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [
         "Editor"

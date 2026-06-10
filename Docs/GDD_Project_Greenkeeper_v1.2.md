@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Doküman Sürümü** | v1.1 |
+| **Doküman Sürümü** | v1.2 |
 | **Tarih** | 9 Haziran 2026 |
 | **Tasarım / Geliştirme** | Poyraz — solo proje |
 | **Motor** | Unity (URP) |
@@ -51,6 +51,42 @@ Tüm tasarım kararları bu üç sütuna göre test edilir. Bir özellik bu süt
 2. **Yaşayan/kirletilen sahne:** PowerWash'ta iş bitince sahne biter; burada maç, oyuncunun eserini ezerek geri getirir. "Hazırla → izle → onar" ritmi türde benzersizdir.
 3. **Stadyum fantezisi:** Boş pazar. Lawn Mowing Simulator bahçe/arazi odaklıdır; profesyonel futbol groundskeeping niş ama görünür bir gerçek-dünya hayranlığına sahiptir (groundskeeping/ASMR video kültürü).
 4. **Denetçi "boss fight" yapısı:** Her maç günü ölçülebilir, karneli bir performans zirvesiyle biter.
+
+### 1.5 Gerçeklik Referansı: IFAB / FIFA Standartları
+
+Oyundaki tüm saha parametreleri **IFAB Oyun Kuralları** ve **FIFA Saha Standartları**'na paraleldir. Bu hem oyunun otantiklik iddiasını güçlendirir hem denetçi sistemine gerçek bir zemin verir. Aşağıdaki değerler `LeagueStandardSO` ve `LineLayoutSO` veri asset'lerinin referans kaynağıdır.
+
+#### Saha Boyutları
+
+| Parametre | IFAB min–max | FIFA Turnuva (zorunlu) | Oyundaki değer |
+|---|---|---|---|
+| Uzunluk | 90–120 m | 105 m | 105 m (sabit, turnuva standardı) |
+| Genişlik | 45–90 m | 68 m | 68 m (sabit) |
+| Çizgi genişliği | — | maks 12 cm | 12 cm |
+
+#### Çim Yüksekliği (kademe karşılıkları)
+
+| Kademe | Standart | Yükseklik bandı | Tolerans |
+|---|---|---|---|
+| 1 — Amatör | Yerel lig / kulüp | 25–50 mm | ±10 mm |
+| 2 — 3. Lig | Ulusal federasyon | 20–35 mm | ±5 mm |
+| 3 — 2./1. Lig | FIFA önerilen | 20–30 mm | ±3 mm |
+| 4 — Süper Lig | FIFA Elite | 20–25 mm | ±2 mm |
+| 5 — Milli/Avrupa | UEFA / FIFA zorunlu | 20–25 mm | ±1 mm |
+
+#### Saha Geometrisi (LineLayoutSO referansı)
+
+| Unsur | Ölçü |
+|---|---|
+| Ceza sahası (penalty area) | 40.32 m × 16.5 m |
+| Kale sahası (goal area) | 18.32 m × 5.5 m |
+| Orta yuvarlak yarıçapı | 9.15 m |
+| Penaltı noktası mesafesi | 11 m |
+| Ceza yayı yarıçapı | 9.15 m (penaltı noktasından) |
+| Korner yayı yarıçapı | 1 m |
+| Kale genişliği / yüksekliği | 7.32 m / 2.44 m |
+
+> **Tasarım notu:** Bu değerler oynanış açısından sabittir; oyuncu saha boyutunu değiştiremez. Denetçi sistemi çizgi geometrisini bu referans değerlere göre ölçer. Üst liglerde toleransın daralması (`±1 mm` çim yüksekliği, çizgi sapması cm hassasiyeti) aynı mekaniği ilerledikçe zorlaştıran ana mekanizmadır — yeni sistem eklenmez, standart sıkışır.
 
 ---
 

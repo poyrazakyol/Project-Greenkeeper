@@ -2,7 +2,8 @@
     "name": "Greenkeeper.Pitch",
     "rootNamespace": "Greenkeeper.Pitch",
     "references": [
-        "Greenkeeper.Core"
+        "Greenkeeper.Core",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
