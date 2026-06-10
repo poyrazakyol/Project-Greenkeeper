@@ -13,6 +13,7 @@ namespace Greenkeeper.Debugging
     {
         [SerializeField] private bool _visible = true;
         [SerializeField] private PitchController _pitch;
+        [SerializeField] private PitchRenderBridge _renderBridge;
 
         private float _smoothedDeltaTime;
 
@@ -44,8 +45,12 @@ namespace Greenkeeper.Debugging
             {
                 line += $"   Tick {_pitch.LastTickMs:F3} ms / 0.5";
             }
-            GUI.Box(new Rect(8f, 8f, 380f, 24f), GUIContent.none);
-            GUI.Label(new Rect(14f, 11f, 370f, 20f), line);
+            if (_renderBridge != null && _renderBridge.LastStampCount > 0)
+            {
+                line += $"   Stamps {_renderBridge.LastStampCount} ({_renderBridge.LastBuildExecuteMs:F2} ms)";
+            }
+            GUI.Box(new Rect(8f, 8f, 560f, 24f), GUIContent.none);
+            GUI.Label(new Rect(14f, 11f, 550f, 20f), line);
         }
     }
 }

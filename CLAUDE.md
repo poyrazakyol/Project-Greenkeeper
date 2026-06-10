@@ -14,7 +14,7 @@ Bu repo iki otorite dokümanına bağlıdır. Her oturumda göreve başlamadan i
 ## Mevcut Durum
 
 - **Aktif faz:** Faz 0 — "Biçmek keyifli mi?"
-- **Aktif blok:** F0.2 (PitchGrid + tick iskeleti + F1 overlay)
+- **Aktif blok:** F0.4 (Çim render: instanced blade + tile culling + RT örnekleme)
 - Blok tanımları: TDD §12. Blok ilerleyişi `Docs/PROGRESS.md` dosyasında takip edilir; bir blok kapanınca orayı güncelle.
 
 ## Kapsam Disiplini (EN ÖNEMLİ KURAL)

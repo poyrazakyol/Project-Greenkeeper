@@ -27,6 +27,7 @@ namespace Greenkeeper.EditorTools
         private const string PlayerPrefabPath = PrefabsDir + "/Player.prefab";
         private const string InputActionsPath = "Assets/_Project/Settings/Greenkeeper.inputactions";
         private const string StadiumDefinitionPath = "Assets/_Project/Data/Stadium_Default.asset";
+        private const string BrushShaderPath = "Assets/_Project/Shaders/PitchBrush.shader";
 
         [MenuItem("Greenkeeper/Build Stadium Scene")]
         public static void Build()
@@ -171,11 +172,24 @@ namespace Greenkeeper.EditorTools
             PitchController pitchController = pitchGo.AddComponent<PitchController>();
             SetReference(pitchController, "_stadium", stadiumDefinition);
 
+            // GPU render bridge (F0.3)
+            var brushShader = AssetDatabase.LoadAssetAtPath<Shader>(BrushShaderPath);
+            PitchRenderBridge renderBridge = pitchGo.AddComponent<PitchRenderBridge>();
+            SetReference(renderBridge, "_stadium", stadiumDefinition);
+            SetReference(renderBridge, "_brushShader", brushShader);
+
             PerfHud perfHud = new GameObject("Debug_PerfHud").AddComponent<PerfHud>();
             SetReference(perfHud, "_pitch", pitchController);
+            SetReference(perfHud, "_renderBridge", renderBridge);
 
             PitchGridOverlay overlay = new GameObject("Debug_PitchOverlay").AddComponent<PitchGridOverlay>();
             SetReference(overlay, "_pitch", pitchController);
+
+            RtDebugViewer rtViewer = new GameObject("Debug_RtViewer").AddComponent<RtDebugViewer>();
+            SetReference(rtViewer, "_bridge", renderBridge);
+
+            DebugTestBrush testBrush = new GameObject("Debug_TestBrush").AddComponent<DebugTestBrush>();
+            SetReference(testBrush, "_bridge", renderBridge);
 
             EditorSceneManager.SaveScene(scene, ScenesDir + "/Stadium.unity");
         }

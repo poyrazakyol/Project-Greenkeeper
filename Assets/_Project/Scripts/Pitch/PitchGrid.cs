@@ -42,14 +42,15 @@ namespace Greenkeeper.Pitch
             Cells = new NativeArray<CellState>(width * height, allocator);
         }
 
-        /// <summary>Grid centered on the world origin, sized per the stadium definition.</summary>
+        /// <summary>
+        /// Grid centered on the world origin, sized per the stadium definition.
+        /// Shares its bounds with the render textures via PitchBounds (TDD §3.2).
+        /// </summary>
         public static PitchGrid CreateCentered(StadiumDefinitionSO stadium,
             Allocator allocator = Allocator.Persistent)
         {
-            var origin = new Vector2(
-                -stadium.gridWidth * stadium.cellSizeM * 0.5f,
-                -stadium.gridHeight * stadium.cellSizeM * 0.5f);
-            return new PitchGrid(stadium.gridWidth, stadium.gridHeight, stadium.cellSizeM, origin, allocator);
+            PitchBounds bounds = PitchBounds.FromStadium(stadium);
+            return new PitchGrid(stadium.gridWidth, stadium.gridHeight, stadium.cellSizeM, bounds.Origin, allocator);
         }
 
         public int IndexOf(int x, int y) => y * Width + x;
