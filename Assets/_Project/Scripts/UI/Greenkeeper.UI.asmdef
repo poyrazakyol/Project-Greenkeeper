@@ -1,0 +1,17 @@
+{
+    "name": "Greenkeeper.UI",
+    "rootNamespace": "Greenkeeper.UI",
+    "references": [
+        "Greenkeeper.Core",
+        "Greenkeeper.Gameplay"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

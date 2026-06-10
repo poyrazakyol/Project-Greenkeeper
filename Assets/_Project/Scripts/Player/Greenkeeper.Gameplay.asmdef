@@ -1,0 +1,20 @@
+{
+    "name": "Greenkeeper.Gameplay",
+    "rootNamespace": "Greenkeeper.Gameplay",
+    "references": [
+        "Greenkeeper.Core",
+        "Greenkeeper.Pitch",
+        "Greenkeeper.Tools",
+        "Unity.InputSystem",
+        "Unity.Cinemachine"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

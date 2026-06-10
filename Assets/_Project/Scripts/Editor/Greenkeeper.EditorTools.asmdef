@@ -1,0 +1,22 @@
+{
+    "name": "Greenkeeper.EditorTools",
+    "rootNamespace": "Greenkeeper.EditorTools",
+    "references": [
+        "Greenkeeper.Core",
+        "Greenkeeper.Gameplay",
+        "Greenkeeper.Debug",
+        "Unity.Cinemachine",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
