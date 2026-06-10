@@ -15,6 +15,8 @@ namespace Greenkeeper.Pitch
     {
         [SerializeField] private StadiumDefinitionSO _stadium;
         [SerializeField] private Shader _brushShader;
+        [Tooltip("Same-subsystem reference used to seed RT_GrassState from the CPU grid at startup.")]
+        [SerializeField] private PitchController _pitchController;
 
         [Header("RT sizes (TDD §3.2)")]
         [SerializeField] private int _grassStateSize = 2048;
@@ -50,6 +52,45 @@ namespace Greenkeeper.Pitch
             _commandBuffer = new CommandBuffer { name = "Greenkeeper.PitchStamps" };
 
             ClearAllTargets();
+
+            // Consumers (grass blades F0.4, ground, future stripe shading)
+            // sample the grass state RT through globals so runtime-created RTs
+            // never need manual material wiring.
+            Shader.SetGlobalTexture("_GrassStateRt", GrassStateRt);
+            Shader.SetGlobalVector("_PitchUvTransform", Bounds.UvTransform);
+        }
+
+        private void Start()
+        {
+            if (_pitchController != null)
+            {
+                SeedFromGrid(_pitchController.Grid);
+            }
+        }
+
+        /// <summary>
+        /// One-shot seed of RT_GrassState from the CPU grid (encoding:
+        /// GrassStateEncoding). Forerunner of the M.1 day-end bulk refresh;
+        /// still CPU->GPU only, never the reverse (authority split, TDD §3.1).
+        /// </summary>
+        public void SeedFromGrid(PitchGrid grid)
+        {
+            var seedTexture = new Texture2D(grid.Width, grid.Height, TextureFormat.RGBA32, false, true)
+            {
+                name = "GrassStateSeed",
+                wrapMode = TextureWrapMode.Clamp
+            };
+            var pixels = new Color32[grid.Width * grid.Height];
+            var cells = grid.Cells;
+            for (int i = 0; i < cells.Length; i++)
+            {
+                pixels[i] = GrassStateEncoding.Encode(cells[i]);
+            }
+            seedTexture.SetPixels32(pixels);
+            seedTexture.Apply(false);
+
+            Graphics.Blit(seedTexture, GrassStateRt);
+            Destroy(seedTexture);
         }
 
         public RenderTexture GetTexture(PitchRenderTarget target)

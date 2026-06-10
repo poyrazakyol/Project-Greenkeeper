@@ -28,12 +28,19 @@ namespace Greenkeeper.EditorTools
         private const string InputActionsPath = "Assets/_Project/Settings/Greenkeeper.inputactions";
         private const string StadiumDefinitionPath = "Assets/_Project/Data/Stadium_Default.asset";
         private const string BrushShaderPath = "Assets/_Project/Shaders/PitchBrush.shader";
+        private const string GrassSettingsPath = "Assets/_Project/Data/GrassRender_Default.asset";
+        private const string GrassShaderPath = "Assets/_Project/Shaders/GrassBlade.shader";
+        private const string GroundShaderPath = "Assets/_Project/Shaders/PitchGround.shader";
 
         [MenuItem("Greenkeeper/Build Stadium Scene")]
         public static void Build()
         {
+            // GPU frame timings feed the F2 HUD (T1 measurement, TDD §13).
+            PlayerSettings.enableFrameTimingStats = true;
+
             Material groundMaterial = CreateOrUpdateGroundMaterial();
             EnsureStadiumDefinitionAsset();
+            EnsureGrassSettingsAsset();
             GameObject playerPrefab = CreatePlayerPrefab();
             CreateBootScene();
             CreateStadiumScene(groundMaterial, playerPrefab);
@@ -66,19 +73,40 @@ namespace Greenkeeper.EditorTools
             }
         }
 
+        private static void EnsureGrassSettingsAsset()
+        {
+            // Create-if-missing only, same policy as the stadium definition.
+            if (AssetDatabase.LoadAssetAtPath<GrassRenderSettingsSO>(GrassSettingsPath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<GrassRenderSettingsSO>(), GrassSettingsPath);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.ImportAsset(GrassSettingsPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Grass render settings created at " + GrassSettingsPath);
+            }
+        }
+
         private static Material CreateOrUpdateGroundMaterial()
         {
-            // Placeholder pitch green; the real grass system arrives in F0.4.
-            var pitchGreen = new Color(0.16f, 0.42f, 0.16f);
+            // F0.4: the ground is the far-LOD half of the grass system — it
+            // samples RT_GrassState via the PitchGround shader (TDD §3.3).
+            Shader groundShader = AssetDatabase.LoadAssetAtPath<Shader>(GroundShaderPath);
+            if (groundShader == null)
+            {
+                throw new System.InvalidOperationException(
+                    $"Ground shader not found at {GroundShaderPath}.");
+            }
 
             var material = AssetDatabase.LoadAssetAtPath<Material>(GroundMaterialPath);
             if (material == null)
             {
-                material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                material = new Material(groundShader);
                 AssetDatabase.CreateAsset(material, GroundMaterialPath);
             }
-            material.SetColor("_BaseColor", pitchGreen);
-            material.SetFloat("_Smoothness", 0.1f);
+            else if (material.shader != groundShader)
+            {
+                material.shader = groundShader;
+            }
             EditorUtility.SetDirty(material);
             return material;
         }
@@ -177,10 +205,20 @@ namespace Greenkeeper.EditorTools
             PitchRenderBridge renderBridge = pitchGo.AddComponent<PitchRenderBridge>();
             SetReference(renderBridge, "_stadium", stadiumDefinition);
             SetReference(renderBridge, "_brushShader", brushShader);
+            SetReference(renderBridge, "_pitchController", pitchController);
+
+            // Instanced grass renderer (F0.4)
+            var grassSettings = AssetDatabase.LoadAssetAtPath<GrassRenderSettingsSO>(GrassSettingsPath);
+            var grassShader = AssetDatabase.LoadAssetAtPath<Shader>(GrassShaderPath);
+            GrassRenderer grassRenderer = pitchGo.AddComponent<GrassRenderer>();
+            SetReference(grassRenderer, "_bridge", renderBridge);
+            SetReference(grassRenderer, "_settings", grassSettings);
+            SetReference(grassRenderer, "_grassShader", grassShader);
 
             PerfHud perfHud = new GameObject("Debug_PerfHud").AddComponent<PerfHud>();
             SetReference(perfHud, "_pitch", pitchController);
             SetReference(perfHud, "_renderBridge", renderBridge);
+            SetReference(perfHud, "_grass", grassRenderer);
 
             PitchGridOverlay overlay = new GameObject("Debug_PitchOverlay").AddComponent<PitchGridOverlay>();
             SetReference(overlay, "_pitch", pitchController);
@@ -190,6 +228,10 @@ namespace Greenkeeper.EditorTools
 
             DebugTestBrush testBrush = new GameObject("Debug_TestBrush").AddComponent<DebugTestBrush>();
             SetReference(testBrush, "_bridge", renderBridge);
+
+            GrassDebugControls grassControls =
+                new GameObject("Debug_GrassControls").AddComponent<GrassDebugControls>();
+            SetReference(grassControls, "_grass", grassRenderer);
 
             EditorSceneManager.SaveScene(scene, ScenesDir + "/Stadium.unity");
         }

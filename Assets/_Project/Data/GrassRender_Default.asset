@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a863d2fd6f06ca74eb2b86988a154d22, type: 3}
+  m_Name: GrassRender_Default
+  m_EditorClassIdentifier: Greenkeeper.Pitch::Greenkeeper.Pitch.GrassRenderSettingsSO
+  tileSizeM: 8
+  maxInstancesPerTile: 24000
+  nearEndM: 18
+  midEndM: 42
+  farEndM: 70
+  nearDensityPerM2: 250
+  midDensityPerM2: 60
+  midWidthScale: 2.2
+  bladeHeightAtMaxM: 0.09
+  bladeWidthM: 0.014
+  bladeHeightJitter: 0.2
+  bladeWidthJitter: 0.25
+  healthyColor: {r: 0.2, g: 0.5, b: 0.14, a: 1}
+  dryColor: {r: 0.55, g: 0.52, b: 0.18, a: 1}
+  moistureDarken: 0.85
+  rootDarken: 0.55
+  damageDiscardThreshold: 0.5
+  swayAmplitudeM: 0.008
+  swayFrequency: 1.6
