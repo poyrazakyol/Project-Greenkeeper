@@ -14,7 +14,7 @@ Bu repo iki otorite dokümanına bağlıdır. Her oturumda göreve başlamadan i
 ## Mevcut Durum
 
 - **Aktif faz:** Faz 0 — "Biçmek keyifli mi?"
-- **Aktif blok:** F0.7 (His turu: ses, kamera sallanımı, tamamlanma tatmini; F0.6'dan devir: şerit kontrast polish + çim GPU artış araştırması)
+- **Aktif blok:** — (tüm F0.x blokları kapandı; Faz 0 kapanış kapısı: dış test "bırakamadım" kriteri. MVP/M.1'e geçiş yalnız Poyraz onayıyla.)
 - Blok tanımları: TDD §12. Blok ilerleyişi `Docs/PROGRESS.md` dosyasında takip edilir; bir blok kapanınca orayı güncelle.
 
 ## Kapsam Disiplini (EN ÖNEMLİ KURAL)

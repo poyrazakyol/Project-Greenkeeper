@@ -36,6 +36,7 @@ namespace Greenkeeper.EditorTools
         private const string MowerDefinitionPath = "Assets/_Project/Data/Tool_PushMower.asset";
         private const string ChannelsDir = "Assets/_Project/Data/Channels";
         private const string MowProgressChannelPath = ChannelsDir + "/OnMowProgress.asset";
+        private const string CameraNoisePath = "Assets/_Project/Data/CameraNoise_FP.asset";
 
         [MenuItem("Greenkeeper/Build Stadium Scene")]
         public static void Build()
@@ -47,6 +48,7 @@ namespace Greenkeeper.EditorTools
             EnsureStadiumDefinitionAsset();
             EnsureGrassSettingsAsset();
             EnsureToolAndChannelAssets();
+            EnsureCameraNoiseAsset();
             GameObject playerPrefab = CreatePlayerPrefab();
             CreateBootScene();
             CreateStadiumScene(groundMaterial, playerPrefab);
@@ -115,6 +117,30 @@ namespace Greenkeeper.EditorTools
             AssetDatabase.SaveAssets();
         }
 
+        private static void EnsureCameraNoiseAsset()
+        {
+            // Built in code instead of loading a Cinemachine package preset:
+            // package paths shift between versions, this stays deterministic.
+            if (AssetDatabase.LoadAssetAtPath<NoiseSettings>(CameraNoisePath) != null)
+            {
+                return;
+            }
+            var noise = ScriptableObject.CreateInstance<NoiseSettings>();
+            noise.PositionNoise = new NoiseSettings.TransformNoiseParams[0];
+            noise.OrientationNoise = new[]
+            {
+                new NoiseSettings.TransformNoiseParams
+                {
+                    X = new NoiseSettings.NoiseParams { Amplitude = 0.8f, Frequency = 1.1f },
+                    Y = new NoiseSettings.NoiseParams { Amplitude = 0.6f, Frequency = 0.9f },
+                    Z = new NoiseSettings.NoiseParams { Amplitude = 0.25f, Frequency = 0.7f }
+                }
+            };
+            AssetDatabase.CreateAsset(noise, CameraNoisePath);
+            AssetDatabase.SaveAssets();
+            UnityEngine.Debug.Log("[Greenkeeper] Camera noise profile created at " + CameraNoisePath);
+        }
+
         private static Material CreateOrUpdateGroundMaterial()
         {
             // F0.4: the ground is the far-LOD half of the grass system — it
@@ -159,6 +185,11 @@ namespace Greenkeeper.EditorTools
                 // (_pitch/_bridge) are wired on the scene instance.
                 var mowerDefinition = AssetDatabase.LoadAssetAtPath<ToolDefinitionSO>(MowerDefinitionPath);
                 SetReference(toolController, "_mowerDefinition", mowerDefinition);
+
+                // Feel layer (F0.7). CameraFeel._noise is a scene object,
+                // wired on the instance.
+                root.AddComponent<MowerAudio>();
+                root.AddComponent<CameraFeel>();
 
                 var cameraTarget = new GameObject("CameraTarget").transform;
                 cameraTarget.SetParent(root.transform, false);
@@ -226,6 +257,11 @@ namespace Greenkeeper.EditorTools
             fpCamera.AddComponent<CinemachineRotateWithFollowTarget>();
             cinemachineCamera.Follow = cameraTarget;
 
+            // Camera feel noise (F0.7): amplitude is driven by CameraFeel.
+            var cameraNoise = fpCamera.AddComponent<CinemachineBasicMultiChannelPerlin>();
+            cameraNoise.NoiseProfile = AssetDatabase.LoadAssetAtPath<NoiseSettings>(CameraNoisePath);
+            cameraNoise.AmplitudeGain = 0f;
+
             // Pitch grid host (F0.2). The stadium asset is loaded here, AFTER
             // NewScene: single-mode scene creation unloads unused assets, so a
             // reference held from before that call goes fake-null.
@@ -280,6 +316,15 @@ namespace Greenkeeper.EditorTools
             MowHud mowHud = new GameObject("Debug_MowHud").AddComponent<MowHud>();
             SetReference(mowHud, "_toolController", toolController);
             SetReference(mowHud, "_progressChannel", progressChannel);
+
+            // Feel wiring (F0.7).
+            CameraFeel cameraFeel = player.GetComponent<CameraFeel>();
+            SetReference(cameraFeel, "_noise", cameraNoise);
+
+            MowCompletionCelebration celebration =
+                new GameObject("MowCompletion").AddComponent<MowCompletionCelebration>();
+            SetReference(celebration, "_progressChannel", progressChannel);
+            SetReference(celebration, "_cameraFeel", cameraFeel);
 
             EditorSceneManager.SaveScene(scene, ScenesDir + "/Stadium.unity");
         }

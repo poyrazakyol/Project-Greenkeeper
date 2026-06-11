@@ -20,6 +20,7 @@ Shader "Greenkeeper/GrassBlade"
         _BendNormalWeight ("Bend Normal Weight", Range(0, 1)) = 0.6
         _SpecStrength ("Specular Strength", Range(0, 1)) = 0.25
         _SpecPower ("Specular Power", Float) = 24
+        _StripeAlbedoGain ("Stripe Albedo Gain", Range(0, 0.5)) = 0.18
         _LodTintOn ("LOD Debug Tint", Float) = 0
     }
     SubShader
@@ -68,6 +69,7 @@ Shader "Greenkeeper/GrassBlade"
             float _BendNormalWeight;
             float _SpecStrength;
             float _SpecPower;
+            float _StripeAlbedoGain;
             float _LodTintOn;
 
             // Per-draw (MaterialPropertyBlock, one per tile).
@@ -162,6 +164,12 @@ Shader "Greenkeeper/GrassBlade"
                 half3 albedo = lerp(_GrassDryColor.rgb, _GrassHealthyColor.rgb, state.g);
                 albedo *= lerp(1.0, _GrassMoistureDarken, state.b);
                 albedo *= lerp(_RootDarken, 1.0, heightFrac);
+
+                // Direct albedo stripe term (F0.7 contrast polish): grass bent
+                // away from the viewer reads lighter, toward reads darker —
+                // controllable independently of the specular response.
+                float2 viewXz = viewDirWS.xz / max(length(viewDirWS.xz), 1e-4);
+                albedo *= 1.0 + _StripeAlbedoGain * dot(bendDir, viewXz);
 
                 output.color = albedo * lighting;
                 return output;

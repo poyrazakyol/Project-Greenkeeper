@@ -27,11 +27,17 @@ namespace Greenkeeper.Gameplay
         private void Awake()
         {
             _input = GetComponent<PlayerInputProvider>();
+            // Constructed in Awake (needs only the SO) so sibling components
+            // (MowerAudio, CameraFeel) can rely on Mower being non-null in
+            // their Start — Unity runs all Awakes before any Start, while the
+            // order of Starts on one GameObject is undefined.
+            Mower = new MowerTool(_mowerDefinition);
         }
 
         private void Start()
         {
-            Mower = new MowerTool(_mowerDefinition);
+            // Equip stays in Start: the context touches scene-wired Pitch
+            // components whose own Awakes must have run.
             Mower.OnEquip(BuildContext());
             _mowerVisual = BuildPlaceholderMowerVisual();
         }

@@ -43,6 +43,7 @@ Shader "Greenkeeper/PitchGround"
             half _GroundSpecStrength;
             half _GroundSpecPower;
             half _GroundBendNormalWeight;
+            half _GroundStripeAlbedoGain;
 
             half _SoilDarken;
             half4 _DamageColor;
@@ -82,8 +83,8 @@ Shader "Greenkeeper/PitchGround"
                 // Far-LOD stripes (F0.6/TDD §3.3): beyond the blade bands the
                 // stripes are read from this texture pass. Same bent-normal
                 // model as GrassBlade so the band transition stays coherent.
-                float2 bendDir = SAMPLE_TEXTURE2D(_PatternRt, sampler_PatternRt, pitchUv).rg
-                    * _GroundStripeContrast;
+                float2 patternDir = SAMPLE_TEXTURE2D(_PatternRt, sampler_PatternRt, pitchUv).rg;
+                float2 bendDir = patternDir * _GroundStripeContrast;
 
                 float3 normalWS = normalize(input.normalWS);
                 normalWS = normalize(normalWS + float3(-bendDir.x, 0.0, -bendDir.y) * _GroundBendNormalWeight);
@@ -95,6 +96,10 @@ Shader "Greenkeeper/PitchGround"
                 half specular = pow(saturate(dot(normalWS, halfDir)), _GroundSpecPower)
                     * _GroundSpecStrength * length(bendDir);
                 half3 lighting = mainLight.color * (halfLambert + specular) + SampleSH(normalWS);
+
+                // Direct albedo stripe term, same model as GrassBlade (F0.7).
+                float2 viewXz = viewDirWS.xz / max(length(viewDirWS.xz), 1e-4);
+                albedo *= 1.0 + _GroundStripeAlbedoGain * dot(patternDir, viewXz);
 
                 return half4(albedo * lighting, 1.0);
             }

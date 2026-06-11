@@ -47,11 +47,13 @@ namespace Greenkeeper.Pitch
 
         [Header("Pattern / stripes (F0.6 — the signature visual, GDD §3.1.2)")]
         [Tooltip("Blade tip offset along the mow direction, as a fraction of blade height.")]
-        [Range(0f, 1f)] public float bendAmount01 = 0.35f;
+        [Range(0f, 1f)] public float bendAmount01 = 0.45f;
         [Tooltip("How strongly the lighting normal tilts against the bend direction.")]
         [Range(0f, 1f)] public float bendNormalWeight = 0.6f;
-        [Range(0f, 1f)] public float bladeSpecStrength = 0.25f;
+        [Range(0f, 1f)] public float bladeSpecStrength = 0.35f;
         public float bladeSpecPower = 24f;
+        [Tooltip("Direct view-dependent brightness term on stripes (F0.7 contrast polish), applied to blades and ground alike.")]
+        [Range(0f, 0.5f)] public float stripeAlbedoGain = 0.18f;
         [Tooltip("Stripe lighting contribution on the far-LOD ground (stripes must read at distance, TDD §3.3).")]
         [Range(0f, 1f)] public float groundStripeContrast = 0.5f;
         [Range(0f, 1f)] public float groundSpecStrength = 0.2f;

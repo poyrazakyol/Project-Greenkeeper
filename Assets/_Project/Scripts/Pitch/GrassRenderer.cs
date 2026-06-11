@@ -82,6 +82,7 @@ namespace Greenkeeper.Pitch
             _material.SetFloat("_BendNormalWeight", _settings.bendNormalWeight);
             _material.SetFloat("_SpecStrength", _settings.bladeSpecStrength);
             _material.SetFloat("_SpecPower", _settings.bladeSpecPower);
+            _material.SetFloat("_StripeAlbedoGain", _settings.stripeAlbedoGain);
         }
 
         private void PushSharedColorGlobals()
@@ -97,6 +98,7 @@ namespace Greenkeeper.Pitch
             Shader.SetGlobalFloat("_GroundSpecStrength", _settings.groundSpecStrength);
             Shader.SetGlobalFloat("_GroundSpecPower", _settings.groundSpecPower);
             Shader.SetGlobalFloat("_GroundBendNormalWeight", _settings.bendNormalWeight);
+            Shader.SetGlobalFloat("_GroundStripeAlbedoGain", _settings.stripeAlbedoGain);
         }
 
         private void Update()

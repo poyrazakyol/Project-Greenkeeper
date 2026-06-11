@@ -40,6 +40,13 @@ namespace Greenkeeper.Tools
         [Tooltip("Height band tolerance for the completion counter (± mm). Superseded by LeagueStandardSO at MVP (M.4).")]
         public float progressToleranceMm = 2f;
 
+        [Header("Audio (empty = procedural placeholder is synthesized, F0.7)")]
+        public AudioClip engineLoopClip;
+        public AudioClip cuttingLoopClip;
+        public AudioClip basketFullClip;
+        [Tooltip("Cut throughput (summed mm across cells per second) treated as full-volume cutting.")]
+        public float cutRateFullScaleMmPerSec = 100f;
+
         [Header("Progression (data only — economy logic arrives at M.7)")]
         public int unlockTier = 1;
         public float price = 0f;

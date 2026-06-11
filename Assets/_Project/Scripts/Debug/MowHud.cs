@@ -15,6 +15,7 @@ namespace Greenkeeper.Debugging
     {
         [SerializeField] private ToolController _toolController;
         [SerializeField] private FloatEventChannelSO _progressChannel;
+        [SerializeField, Range(0.5f, 1f)] private float _completionThreshold = 0.99f;
 
         private float _progress01;
 
@@ -64,6 +65,13 @@ namespace Greenkeeper.Debugging
             var box = new Rect(Screen.width - width - 8f, 8f, width, 24f);
             GUI.Box(box, GUIContent.none);
             GUI.Label(new Rect(box.x + 6f, box.y + 3f, width - 12f, 20f), line);
+
+            if (_progress01 >= _completionThreshold)
+            {
+                var banner = new Rect(Screen.width * 0.5f - 130f, 48f, 260f, 30f);
+                GUI.Box(banner, GUIContent.none);
+                GUI.Label(new Rect(banner.x + 10f, banner.y + 6f, 240f, 20f), "SAHA BİÇİLDİ ✓");
+            }
         }
     }
 }

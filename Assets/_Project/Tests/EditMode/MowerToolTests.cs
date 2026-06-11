@@ -155,6 +155,47 @@ namespace Greenkeeper.Tests
         }
 
         [Test]
+        public void IsEngaged_TracksHeldAndBasketState()
+        {
+            Assert.That(_mower.IsEngaged, Is.False, "Not engaged before first held frame.");
+
+            _mower.OnUseHeld(ContextAt(Vector3.zero), 0.016f);
+            Assert.That(_mower.IsEngaged, Is.True);
+
+            _mower.OnUseReleased(ContextAt(Vector3.zero));
+            Assert.That(_mower.IsEngaged, Is.False);
+
+            _definition.basketCapacityL = 0.0001f; // instantly full
+            _mower.OnUseHeld(ContextAt(new Vector3(3f, 0f, 0f)), 0.016f);
+            _mower.OnUseHeld(ContextAt(new Vector3(3f, 0f, 1f)), 0.016f);
+            Assert.That(_mower.IsEngaged, Is.False, "A full basket disengages the blades.");
+        }
+
+        [Test]
+        public void SmoothedCutRate_RisesWhileCutting_DropsOverMownGrass()
+        {
+            // Sweep fresh 45 mm grass: rate must rise.
+            for (int i = 0; i < 30; i++)
+            {
+                _mower.OnUseHeld(ContextAt(new Vector3(0f, 0f, i * 0.1f)), 0.016f);
+            }
+            float cuttingRate = _mower.SmoothedCutRate01;
+            Assert.That(cuttingRate, Is.GreaterThan(0.1f), "Cutting tall grass must register.");
+
+            // Re-sweep the same already-mown path: rate must decay toward 0.
+            _mower.OnUseReleased(ContextAt(Vector3.zero));
+            for (int i = 0; i < 30; i++)
+            {
+                _mower.OnUseHeld(ContextAt(new Vector3(0f, 0f, i * 0.1f)), 0.016f);
+            }
+            Assert.That(_mower.SmoothedCutRate01, Is.LessThan(0.05f),
+                "Already-mown grass must read silent (ASMR honesty).");
+
+            _mower.OnUseReleased(ContextAt(Vector3.zero));
+            Assert.That(_mower.SmoothedCutRate01, Is.EqualTo(0f), "Release resets the rate.");
+        }
+
+        [Test]
         public void CycleHeightStep_ClampsAtBothEnds()
         {
             Assert.That(_mower.CurrentCutHeightMm, Is.EqualTo(25f));

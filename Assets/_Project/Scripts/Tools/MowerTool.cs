@@ -27,6 +27,15 @@ namespace Greenkeeper.Tools
             ? 1f
             : Mathf.Clamp01(_emptyHoldSeconds / Definition.basketEmptySeconds);
 
+        /// <summary>True while the trigger is held and the basket can still take clippings (feel/audio signal, F0.7).</summary>
+        public bool IsEngaged { get; private set; }
+
+        /// <summary>
+        /// Smoothed 0-1 cutting throughput — silent over already-mown grass,
+        /// full when sweeping tall grass at speed. Drives the cutting swish.
+        /// </summary>
+        public float SmoothedCutRate01 { get; private set; }
+
         private readonly List<Vector2Int> _cellBuffer = new List<Vector2Int>(256);
         private int _stepIndex;
         private float _basketFillL;
@@ -54,23 +63,35 @@ namespace Greenkeeper.Tools
                 _hasPreviousPosition = true;
             }
 
-            if (!BasketFull)
+            IsEngaged = !BasketFull;
+            float sweepCutMm = 0f;
+            if (IsEngaged)
             {
-                Sweep(ctx, _previousPosition, deckPosition);
+                sweepCutMm = Sweep(ctx, _previousPosition, deckPosition);
             }
             _previousPosition = deckPosition;
+
+            // EMA toward the instantaneous throughput; ~0.2 s response.
+            float fullScale = Mathf.Max(Definition.cutRateFullScaleMmPerSec, 0.001f);
+            float instantRate01 = Mathf.Clamp01(sweepCutMm / Mathf.Max(dt, 0.0001f) / fullScale);
+            float blend = Mathf.Clamp01(dt / 0.2f);
+            SmoothedCutRate01 = Mathf.Lerp(SmoothedCutRate01, instantRate01, blend);
         }
 
         public void OnUseReleased(ToolContext ctx)
         {
             // Next press starts a fresh stroke instead of sweeping the gap.
             _hasPreviousPosition = false;
+            IsEngaged = false;
+            SmoothedCutRate01 = 0f;
         }
 
         public void OnUnequip()
         {
             _hasPreviousPosition = false;
             _emptyHoldSeconds = 0f;
+            IsEngaged = false;
+            SmoothedCutRate01 = 0f;
         }
 
         /// <summary>Scroll/Q-E height step cycling, clamped at the ends.</summary>
@@ -112,7 +133,8 @@ namespace Greenkeeper.Tools
             return ctx.PlayerPosition + forwardXz * Definition.mowForwardOffsetM;
         }
 
-        private void Sweep(in ToolContext ctx, Vector3 from, Vector3 to)
+        /// <summary>Runs one capsule sweep; returns the total cut mm (for basket + audio).</summary>
+        private float Sweep(in ToolContext ctx, Vector3 from, Vector3 to)
         {
             float radius = Definition.mowWidthM * 0.5f;
             var moveXz = new Vector2(to.x - from.x, to.z - from.z);
@@ -148,6 +170,7 @@ namespace Greenkeeper.Tools
 
             // GPU layer, same stroke (TDD §3.1 dual write, no readback).
             EmitStamps(ctx, from, to, radius, moveDir);
+            return totalCutMm;
         }
 
         private void EmitStamps(in ToolContext ctx, Vector3 from, Vector3 to, float radius, Vector2 moveDir)
