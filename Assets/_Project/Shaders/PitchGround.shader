@@ -32,10 +32,17 @@ Shader "Greenkeeper/PitchGround"
 
             TEXTURE2D(_GrassStateRt);
             SAMPLER(sampler_GrassStateRt);
+            TEXTURE2D(_PatternRt);
+            SAMPLER(sampler_PatternRt);
             float4 _PitchUvTransform;
             half4 _GrassHealthyColor;
             half4 _GrassDryColor;
             half _GrassMoistureDarken;
+            // Stripe params pushed as globals by GrassRenderer (F0.6).
+            half _GroundStripeContrast;
+            half _GroundSpecStrength;
+            half _GroundSpecPower;
+            half _GroundBendNormalWeight;
 
             half _SoilDarken;
             half4 _DamageColor;
@@ -72,10 +79,22 @@ Shader "Greenkeeper/PitchGround"
                 albedo *= _SoilDarken; // ground reads darker than blade tips
                 albedo = lerp(albedo, _DamageColor.rgb, state.a); // mud where damaged
 
+                // Far-LOD stripes (F0.6/TDD §3.3): beyond the blade bands the
+                // stripes are read from this texture pass. Same bent-normal
+                // model as GrassBlade so the band transition stays coherent.
+                float2 bendDir = SAMPLE_TEXTURE2D(_PatternRt, sampler_PatternRt, pitchUv).rg
+                    * _GroundStripeContrast;
+
                 float3 normalWS = normalize(input.normalWS);
+                normalWS = normalize(normalWS + float3(-bendDir.x, 0.0, -bendDir.y) * _GroundBendNormalWeight);
+
                 Light mainLight = GetMainLight();
                 half halfLambert = saturate(dot(normalWS, mainLight.direction)) * 0.5 + 0.5;
-                half3 lighting = mainLight.color * halfLambert + SampleSH(normalWS);
+                float3 viewDirWS = normalize(GetWorldSpaceViewDir(input.positionWS));
+                float3 halfDir = normalize(mainLight.direction + viewDirWS);
+                half specular = pow(saturate(dot(normalWS, halfDir)), _GroundSpecPower)
+                    * _GroundSpecStrength * length(bendDir);
+                half3 lighting = mainLight.color * (halfLambert + specular) + SampleSH(normalWS);
 
                 return half4(albedo * lighting, 1.0);
             }

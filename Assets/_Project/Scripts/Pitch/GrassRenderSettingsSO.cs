@@ -45,6 +45,18 @@ namespace Greenkeeper.Pitch
         [Tooltip("RT damage channel value above which a blade is culled (bald spot).")]
         [Range(0f, 1f)] public float damageDiscardThreshold = 0.5f;
 
+        [Header("Pattern / stripes (F0.6 — the signature visual, GDD §3.1.2)")]
+        [Tooltip("Blade tip offset along the mow direction, as a fraction of blade height.")]
+        [Range(0f, 1f)] public float bendAmount01 = 0.35f;
+        [Tooltip("How strongly the lighting normal tilts against the bend direction.")]
+        [Range(0f, 1f)] public float bendNormalWeight = 0.6f;
+        [Range(0f, 1f)] public float bladeSpecStrength = 0.25f;
+        public float bladeSpecPower = 24f;
+        [Tooltip("Stripe lighting contribution on the far-LOD ground (stripes must read at distance, TDD §3.3).")]
+        [Range(0f, 1f)] public float groundStripeContrast = 0.5f;
+        [Range(0f, 1f)] public float groundSpecStrength = 0.2f;
+        public float groundSpecPower = 16f;
+
         [Header("Idle sway (cheap vertex-only)")]
         public float swayAmplitudeM = 0.008f;
         public float swayFrequency = 1.6f;
@@ -58,6 +70,8 @@ namespace Greenkeeper.Pitch
             nearDensityPerM2 = Mathf.Max(nearDensityPerM2, 0f);
             midDensityPerM2 = Mathf.Clamp(midDensityPerM2, 0f, nearDensityPerM2);
             maxInstancesPerTile = Mathf.Max(maxInstancesPerTile, 0);
+            bladeSpecPower = Mathf.Max(bladeSpecPower, 1f);
+            groundSpecPower = Mathf.Max(groundSpecPower, 1f);
         }
     }
 }

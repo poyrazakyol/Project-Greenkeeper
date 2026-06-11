@@ -63,10 +63,11 @@ namespace Greenkeeper.Pitch
 
             ClearAllTargets();
 
-            // Consumers (grass blades F0.4, ground, future stripe shading)
-            // sample the grass state RT through globals so runtime-created RTs
-            // never need manual material wiring.
+            // Consumers (grass blades F0.4, stripes F0.6, ground) sample the
+            // RTs through globals so runtime-created RTs never need manual
+            // material wiring.
             Shader.SetGlobalTexture("_GrassStateRt", GrassStateRt);
+            Shader.SetGlobalTexture("_PatternRt", PatternRt);
             Shader.SetGlobalVector("_PitchUvTransform", Bounds.UvTransform);
         }
 

@@ -29,5 +29,12 @@ MonoBehaviour:
   moistureDarken: 0.85
   rootDarken: 0.55
   damageDiscardThreshold: 0.5
+  bendAmount01: 0.6
+  bendNormalWeight: 0.6
+  bladeSpecStrength: 0.5
+  bladeSpecPower: 24
+  groundStripeContrast: 0.8
+  groundSpecStrength: 0.2
+  groundSpecPower: 16
   swayAmplitudeM: 0.008
   swayFrequency: 1.6

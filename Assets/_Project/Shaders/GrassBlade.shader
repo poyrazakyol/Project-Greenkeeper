@@ -16,6 +16,10 @@ Shader "Greenkeeper/GrassBlade"
         _DamageThreshold ("Damage Discard Threshold", Range(0, 1)) = 0.5
         _SwayAmp ("Sway Amplitude (m)", Float) = 0.008
         _SwayFreq ("Sway Frequency", Float) = 1.6
+        _BendAmount ("Pattern Bend Amount", Range(0, 1)) = 0.35
+        _BendNormalWeight ("Bend Normal Weight", Range(0, 1)) = 0.6
+        _SpecStrength ("Specular Strength", Range(0, 1)) = 0.25
+        _SpecPower ("Specular Power", Float) = 24
         _LodTintOn ("LOD Debug Tint", Float) = 0
     }
     SubShader
@@ -44,6 +48,8 @@ Shader "Greenkeeper/GrassBlade"
             // Bound as globals by PitchRenderBridge / GrassRenderer.
             TEXTURE2D(_GrassStateRt);
             SAMPLER(sampler_GrassStateRt);
+            TEXTURE2D(_PatternRt);
+            SAMPLER(sampler_PatternRt);
             float4 _PitchUvTransform;   // uv = worldXZ * zw + xy
             half4 _GrassHealthyColor;
             half4 _GrassDryColor;
@@ -58,6 +64,10 @@ Shader "Greenkeeper/GrassBlade"
             float _DamageThreshold;
             float _SwayAmp;
             float _SwayFreq;
+            float _BendAmount;
+            float _BendNormalWeight;
+            float _SpecStrength;
+            float _SpecPower;
             float _LodTintOn;
 
             // Per-draw (MaterialPropertyBlock, one per tile).
@@ -103,6 +113,8 @@ Shader "Greenkeeper/GrassBlade"
                 float2 rootXz = _TileOriginSize.xy + float2(hx, hz) * _TileOriginSize.zw;
                 float2 pitchUv = rootXz * _PitchUvTransform.zw + _PitchUvTransform.xy;
                 float4 state = SAMPLE_TEXTURE2D_LOD(_GrassStateRt, sampler_GrassStateRt, pitchUv, 0);
+                // Mow direction (F0.6): zero where never mowed -> upright blade.
+                float2 bendDir = SAMPLE_TEXTURE2D_LOD(_PatternRt, sampler_PatternRt, pitchUv, 0).rg;
 
                 float bladeHeight = state.r * _BladeHeightAtMax * (1.0 + (hHeight * 2.0 - 1.0) * _HeightJitter);
                 float bladeWidth = _BladeWidth * _WidthScale * (1.0 + (hWidth * 2.0 - 1.0) * _WidthJitter);
@@ -121,19 +133,31 @@ Shader "Greenkeeper/GrassBlade"
                 float sway = sin(_Time.y * _SwayFreq + hPhase * 6.2831853 + rootXz.x * 0.7 + rootXz.y * 0.5)
                     * _SwayAmp * heightFrac * heightFrac;
 
+                // Geometric bend (F0.6): the tip leans along the mow direction;
+                // sway rides on top of the static lean.
+                float2 bendOffset = bendDir * (_BendAmount * bladeHeight * heightFrac * heightFrac);
+
                 float3 positionWS;
                 positionWS.xz = rootXz
                     + widthDirXz * (input.positionOS.x * bladeWidth)
+                    + bendOffset
                     + float2(0.8, 0.6) * sway;
                 positionWS.y = input.positionOS.y * bladeHeight;
                 output.positionCS = TransformWorldToHClip(positionWS);
 
-                // Per-vertex half-Lambert with a mostly-up normal: soft lawn
-                // look, 4 verts per blade keeps it cheap.
-                float3 normalWS = normalize(lerp(float3(widthDirXz.y, 0.0, -widthDirXz.x), float3(0.0, 1.0, 0.0), 0.7));
+                // Per-vertex lighting, 4 verts per blade keeps it cheap. The
+                // normal tilts AGAINST the bend (real lawn optics): the
+                // specular/diffuse angle difference is what draws the stripes
+                // (TDD §3.3 — the signature visual).
+                float3 normalWS = lerp(float3(widthDirXz.y, 0.0, -widthDirXz.x), float3(0.0, 1.0, 0.0), 0.7);
+                normalWS = normalize(normalWS + float3(-bendDir.x, 0.0, -bendDir.y) * _BendNormalWeight);
+
                 Light mainLight = GetMainLight();
                 half halfLambert = saturate(dot(normalWS, mainLight.direction)) * 0.5 + 0.5;
-                half3 lighting = mainLight.color * halfLambert + SampleSH(normalWS);
+                float3 viewDirWS = normalize(GetWorldSpaceViewDir(positionWS));
+                float3 halfDir = normalize(mainLight.direction + viewDirWS);
+                half specular = pow(saturate(dot(normalWS, halfDir)), _SpecPower) * _SpecStrength;
+                half3 lighting = mainLight.color * (halfLambert + specular) + SampleSH(normalWS);
 
                 half3 albedo = lerp(_GrassDryColor.rgb, _GrassHealthyColor.rgb, state.g);
                 albedo *= lerp(1.0, _GrassMoistureDarken, state.b);

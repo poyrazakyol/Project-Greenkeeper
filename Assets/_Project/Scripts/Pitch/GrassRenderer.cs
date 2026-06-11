@@ -78,15 +78,25 @@ namespace Greenkeeper.Pitch
             _material.SetFloat("_DamageThreshold", _settings.damageDiscardThreshold);
             _material.SetFloat("_SwayAmp", _settings.swayAmplitudeM);
             _material.SetFloat("_SwayFreq", _settings.swayFrequency);
+            _material.SetFloat("_BendAmount", _settings.bendAmount01);
+            _material.SetFloat("_BendNormalWeight", _settings.bendNormalWeight);
+            _material.SetFloat("_SpecStrength", _settings.bladeSpecStrength);
+            _material.SetFloat("_SpecPower", _settings.bladeSpecPower);
         }
 
         private void PushSharedColorGlobals()
         {
             // Shared by GrassBlade and PitchGround so the far band (ground
-            // texture takes over, TDD §3.3) matches the blade coloring.
+            // texture takes over, TDD §3.3) matches the blade coloring and
+            // stripe response. Ground params go through globals because the
+            // ground material is an asset.
             Shader.SetGlobalColor("_GrassHealthyColor", _settings.healthyColor);
             Shader.SetGlobalColor("_GrassDryColor", _settings.dryColor);
             Shader.SetGlobalFloat("_GrassMoistureDarken", _settings.moistureDarken);
+            Shader.SetGlobalFloat("_GroundStripeContrast", _settings.groundStripeContrast);
+            Shader.SetGlobalFloat("_GroundSpecStrength", _settings.groundSpecStrength);
+            Shader.SetGlobalFloat("_GroundSpecPower", _settings.groundSpecPower);
+            Shader.SetGlobalFloat("_GroundBendNormalWeight", _settings.bendNormalWeight);
         }
 
         private void Update()
