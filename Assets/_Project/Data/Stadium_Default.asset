@@ -17,7 +17,7 @@ MonoBehaviour:
   cellSizeM: 0.5
   gridWidth: 212
   gridHeight: 140
-  initialGrassHeightMm: 45
+  initialGrassHeightMm: 52
   initialHealth: 70
   initialMoisture: 55
   grassHeightJitterMm: 6

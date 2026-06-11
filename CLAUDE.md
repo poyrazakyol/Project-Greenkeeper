@@ -13,8 +13,8 @@ Bu repo iki otorite dokümanına bağlıdır. Her oturumda göreve başlamadan i
 
 ## Mevcut Durum
 
-- **Aktif faz:** Faz 0 — "Biçmek keyifli mi?"
-- **Aktif blok:** — (tüm F0.x blokları kapandı; Faz 0 kapanış kapısı: dış test "bırakamadım" kriteri. MVP/M.1'e geçiş yalnız Poyraz onayıyla.)
+- **Aktif faz:** MVP — "Döngü kapanışı" (Faz 0 ✅ 2026-06-12: dış test "bırakamadım" kriteri geçti)
+- **Aktif blok:** M.1 (TimeSystem + Günü Bitir + gün-sonu simülasyonu (büyüme, solma) + sabah özeti)
 - Blok tanımları: TDD §12. Blok ilerleyişi `Docs/PROGRESS.md` dosyasında takip edilir; bir blok kapanınca orayı güncelle.
 
 ## Kapsam Disiplini (EN ÖNEMLİ KURAL)

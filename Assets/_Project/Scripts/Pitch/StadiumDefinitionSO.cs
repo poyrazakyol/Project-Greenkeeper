@@ -19,7 +19,10 @@ namespace Greenkeeper.Pitch
         public int gridHeight = 140;  // cells along pitch width (world Z)
 
         [Header("Initial cell state")]
-        public float initialGrassHeightMm = 45f;
+        // 52 mm (raised from 45 after the Phase 0 external test: "starting
+        // grass should be taller"). Jitter ±6 keeps the max at 58, inside the
+        // 0-60 mm CellState range.
+        public float initialGrassHeightMm = 52f;
         [Range(0, 100)] public int initialHealth = 70;
         [Range(0, 100)] public int initialMoisture = 55;
         public float grassHeightJitterMm = 6f;

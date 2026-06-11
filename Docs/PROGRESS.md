@@ -5,7 +5,16 @@
 
 ## Aktif
 
-- **Faz 0 kapanış kapısı** — dış test: "bırakamadım" kriteri (Poyraz organize eder; tüm F0.x blokları kapandı). MVP'ye geçiş yalnız Poyraz onayıyla.
+- **MVP / M.1** — TimeSystem + Günü Bitir + gün-sonu simülasyonu (büyüme, solma) + sabah özeti *(başlamadı)*
+
+## Faz 0 Kapanışı — 2026-06-12 ✅
+
+**Dış test ("bırakamadım" kriteri) GEÇTİ.** Sonuçlar:
+- Genel beğeni — biçme döngüsü tutuyor.
+- Testçiler çimlere **isim yazdı** — kendiliğinden yaratıcılık/oyuncaklık davranışı; tatmin ve sahiplenme işareti (desen sisteminin "imza görsel" iddiasını doğruluyor, GDD §3.1.2).
+- Geri bildirim: "başlangıç çim yüksekliği daha uzun olmalı" → uygulandı: `Stadium_Default.asset` initialGrassHeightMm **45 → 52 mm** (jitter ±6 ile maks 58, 0–60 mm sözleşmesi içinde; kesim öncesi/sonrası kontrast da güçlendi).
+
+Faz 0 sorusu "Biçmek keyifli mi?" → **evet.** MVP'ye geçiş Poyraz onayıyla verildi (2026-06-12); aktif blok M.1.
 
 ## Tamamlanan Bloklar
 
@@ -27,4 +36,5 @@
 - [x] F0.4 — Çim render (instanced blade + LOD) ✅ 2026-06-11 (T1 geçti: ~0.34 ms GPU @ RTX 3070 Laptop)
 - [x] F0.5 — MowerTool (biçme hissi) ✅ 2026-06-11
 - [x] F0.6 — Desen / şerit yansıması ✅ 2026-06-11 (⚠ kontrast polish + GPU artış araştırması F0.7'ye devredildi)
-- [x] F0.7 — His turu ✅ 2026-06-11 (GPU artışı yanlış alarm: üç varyant 0.70–0.72 ms) — ⏳ **dış test "bırakamadım" kriteri Faz 0 kapanış kapısı olarak açık**
+- [x] F0.7 — His turu ✅ 2026-06-11 (GPU artışı yanlış alarm: üç varyant 0.70–0.72 ms)
+- [x] **Dış test: "bırakamadım" kriteri ✅ 2026-06-12 — FAZ 0 KAPANDI**
