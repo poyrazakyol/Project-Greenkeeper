@@ -14,7 +14,7 @@ Bu repo iki otorite dokümanına bağlıdır. Her oturumda göreve başlamadan i
 ## Mevcut Durum
 
 - **Aktif faz:** Faz 0 — "Biçmek keyifli mi?"
-- **Aktif blok:** F0.5 (MowerTool: kapsül süpürme, çift-katman yazım, kesim yüksekliği, sepet)
+- **Aktif blok:** F0.6 (Desen: PatternDir yazımı + shader şerit yansıması)
 - Blok tanımları: TDD §12. Blok ilerleyişi `Docs/PROGRESS.md` dosyasında takip edilir; bir blok kapanınca orayı güncelle.
 
 ## Kapsam Disiplini (EN ÖNEMLİ KURAL)

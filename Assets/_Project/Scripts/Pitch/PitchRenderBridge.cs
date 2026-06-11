@@ -30,23 +30,33 @@ namespace Greenkeeper.Pitch
         public int LastStampCount { get; private set; }
         public double LastBuildExecuteMs { get; private set; }
 
+        /// <summary>
+        /// Cached delegate for ToolContext so per-frame context building does
+        /// not allocate (System.Action cannot bind the in-parameter overload).
+        /// </summary>
+        public System.Action<StampRequest> EnqueueStampAction { get; private set; }
+
         private readonly List<StampRequest> _queue = new List<StampRequest>();
         private readonly Stopwatch _stopwatch = new Stopwatch();
+        // ColorMask/BlendOp are ShaderLab state and read from the material (a
+        // property block cannot set them), so each (mask, blend op) pair in
+        // use gets its own material.
+        private readonly Dictionary<int, Material> _brushMaterials = new Dictionary<int, Material>();
         private CommandBuffer _commandBuffer;
-        private Material _brushMaterial;
+        private Shader _resolvedBrushShader;
         private MaterialPropertyBlock _propertyBlock;
         private Mesh _quad;
 
         private void Awake()
         {
             Bounds = PitchBounds.FromStadium(_stadium);
+            EnqueueStampAction = stamp => EnqueueStamp(stamp);
 
             GrassStateRt = CreateRt("RT_GrassState", _grassStateSize, RenderTextureFormat.ARGBHalf);
             PatternRt = CreateRt("RT_Pattern", _patternSize, RenderTextureFormat.RGHalf);
             PaintRt = CreateRt("RT_Paint", _paintSize, RenderTextureFormat.R8);
 
-            Shader shader = _brushShader != null ? _brushShader : Shader.Find("Greenkeeper/PitchBrush");
-            _brushMaterial = new Material(shader);
+            _resolvedBrushShader = _brushShader != null ? _brushShader : Shader.Find("Greenkeeper/PitchBrush");
             _propertyBlock = new MaterialPropertyBlock();
             _quad = PitchStampRenderer.CreateQuadMesh();
             _commandBuffer = new CommandBuffer { name = "Greenkeeper.PitchStamps" };
@@ -123,7 +133,8 @@ namespace Greenkeeper.Pitch
             {
                 StampRequest stamp = _queue[i];
                 PitchStampRenderer.AppendStamp(
-                    _commandBuffer, GetTexture(stamp.Target), _quad, _brushMaterial, _propertyBlock,
+                    _commandBuffer, GetTexture(stamp.Target), _quad,
+                    GetMaterialForState(stamp.EffectiveMask, stamp.BlendOp), _propertyBlock,
                     stamp, Bounds);
             }
             Graphics.ExecuteCommandBuffer(_commandBuffer);
@@ -131,6 +142,20 @@ namespace Greenkeeper.Pitch
 
             _queue.Clear();
             LastBuildExecuteMs = _stopwatch.Elapsed.TotalMilliseconds;
+        }
+
+        private Material GetMaterialForState(ColorWriteMask mask, BlendOp blendOp)
+        {
+            int key = ((int)mask << 8) | (int)blendOp;
+            if (!_brushMaterials.TryGetValue(key, out Material material))
+            {
+                material = new Material(_resolvedBrushShader);
+                material.SetFloat("_ColorMask", (float)mask);
+                material.SetFloat("_BlendOp", (float)blendOp);
+                material.SetFloat("_MinNeutral", blendOp == BlendOp.Min ? 1f : 0f);
+                _brushMaterials.Add(key, material);
+            }
+            return material;
         }
 
         private static RenderTexture CreateRt(string rtName, int size, RenderTextureFormat format)
@@ -169,10 +194,11 @@ namespace Greenkeeper.Pitch
             ReleaseRt(GrassStateRt);
             ReleaseRt(PatternRt);
             ReleaseRt(PaintRt);
-            if (_brushMaterial != null)
+            foreach (Material material in _brushMaterials.Values)
             {
-                Destroy(_brushMaterial);
+                Destroy(material);
             }
+            _brushMaterials.Clear();
             if (_quad != null)
             {
                 Destroy(_quad);

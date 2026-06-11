@@ -1,7 +1,9 @@
 using Greenkeeper.Core;
+using Greenkeeper.Core.Events;
 using Greenkeeper.Debugging;
 using Greenkeeper.Gameplay;
 using Greenkeeper.Pitch;
+using Greenkeeper.Tools;
 using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -31,6 +33,9 @@ namespace Greenkeeper.EditorTools
         private const string GrassSettingsPath = "Assets/_Project/Data/GrassRender_Default.asset";
         private const string GrassShaderPath = "Assets/_Project/Shaders/GrassBlade.shader";
         private const string GroundShaderPath = "Assets/_Project/Shaders/PitchGround.shader";
+        private const string MowerDefinitionPath = "Assets/_Project/Data/Tool_PushMower.asset";
+        private const string ChannelsDir = "Assets/_Project/Data/Channels";
+        private const string MowProgressChannelPath = ChannelsDir + "/OnMowProgress.asset";
 
         [MenuItem("Greenkeeper/Build Stadium Scene")]
         public static void Build()
@@ -41,6 +46,7 @@ namespace Greenkeeper.EditorTools
             Material groundMaterial = CreateOrUpdateGroundMaterial();
             EnsureStadiumDefinitionAsset();
             EnsureGrassSettingsAsset();
+            EnsureToolAndChannelAssets();
             GameObject playerPrefab = CreatePlayerPrefab();
             CreateBootScene();
             CreateStadiumScene(groundMaterial, playerPrefab);
@@ -86,6 +92,29 @@ namespace Greenkeeper.EditorTools
             }
         }
 
+        private static void EnsureToolAndChannelAssets()
+        {
+            // Create-if-missing only, same policy as the stadium definition.
+            if (AssetDatabase.LoadAssetAtPath<ToolDefinitionSO>(MowerDefinitionPath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<ToolDefinitionSO>(), MowerDefinitionPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Mower definition created at " + MowerDefinitionPath);
+            }
+
+            if (!AssetDatabase.IsValidFolder(ChannelsDir))
+            {
+                AssetDatabase.CreateFolder("Assets/_Project/Data", "Channels");
+            }
+            if (AssetDatabase.LoadAssetAtPath<FloatEventChannelSO>(MowProgressChannelPath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<FloatEventChannelSO>(), MowProgressChannelPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Mow progress channel created at " + MowProgressChannelPath);
+            }
+            AssetDatabase.SaveAssets();
+        }
+
         private static Material CreateOrUpdateGroundMaterial()
         {
             // F0.4: the ground is the far-LOD half of the grass system — it
@@ -124,6 +153,12 @@ namespace Greenkeeper.EditorTools
                 PlayerInputProvider inputProvider = root.AddComponent<PlayerInputProvider>();
                 root.AddComponent<FirstPersonController>();
                 MouseLook mouseLook = root.AddComponent<MouseLook>();
+                ToolController toolController = root.AddComponent<ToolController>();
+
+                // Asset reference lives in the prefab; scene references
+                // (_pitch/_bridge) are wired on the scene instance.
+                var mowerDefinition = AssetDatabase.LoadAssetAtPath<ToolDefinitionSO>(MowerDefinitionPath);
+                SetReference(toolController, "_mowerDefinition", mowerDefinition);
 
                 var cameraTarget = new GameObject("CameraTarget").transform;
                 cameraTarget.SetParent(root.transform, false);
@@ -226,12 +261,25 @@ namespace Greenkeeper.EditorTools
             RtDebugViewer rtViewer = new GameObject("Debug_RtViewer").AddComponent<RtDebugViewer>();
             SetReference(rtViewer, "_bridge", renderBridge);
 
-            DebugTestBrush testBrush = new GameObject("Debug_TestBrush").AddComponent<DebugTestBrush>();
-            SetReference(testBrush, "_bridge", renderBridge);
-
             GrassDebugControls grassControls =
                 new GameObject("Debug_GrassControls").AddComponent<GrassDebugControls>();
             SetReference(grassControls, "_grass", grassRenderer);
+
+            // Tool wiring (F0.5): scene refs go on the prefab INSTANCE.
+            var progressChannel = AssetDatabase.LoadAssetAtPath<FloatEventChannelSO>(MowProgressChannelPath);
+            ToolController toolController = player.GetComponent<ToolController>();
+            SetReference(toolController, "_pitch", pitchController);
+            SetReference(toolController, "_bridge", renderBridge);
+
+            MowProgressTracker progressTracker =
+                new GameObject("MowProgressTracker").AddComponent<MowProgressTracker>();
+            SetReference(progressTracker, "_pitch", pitchController);
+            SetReference(progressTracker, "_toolController", toolController);
+            SetReference(progressTracker, "_progressChannel", progressChannel);
+
+            MowHud mowHud = new GameObject("Debug_MowHud").AddComponent<MowHud>();
+            SetReference(mowHud, "_toolController", toolController);
+            SetReference(mowHud, "_progressChannel", progressChannel);
 
             EditorSceneManager.SaveScene(scene, ScenesDir + "/Stadium.unity");
         }

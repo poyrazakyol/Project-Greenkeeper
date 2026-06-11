@@ -6,7 +6,8 @@
         "Greenkeeper.Pitch",
         "Greenkeeper.Tools",
         "Unity.InputSystem",
-        "Unity.Cinemachine"
+        "Unity.Cinemachine",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

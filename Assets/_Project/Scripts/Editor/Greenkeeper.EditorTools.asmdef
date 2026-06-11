@@ -4,6 +4,7 @@
     "references": [
         "Greenkeeper.Core",
         "Greenkeeper.Pitch",
+        "Greenkeeper.Tools",
         "Greenkeeper.Gameplay",
         "Greenkeeper.Debug",
         "Unity.Cinemachine",

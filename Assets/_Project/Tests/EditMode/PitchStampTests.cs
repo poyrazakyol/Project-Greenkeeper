@@ -56,7 +56,11 @@ namespace Greenkeeper.Tests
             PitchStampRenderer.AppendStamp(
                 _commandBuffer, _rt, _quad, _material, new MaterialPropertyBlock(), stamp, _bounds);
             Graphics.ExecuteCommandBuffer(_commandBuffer);
+            ReadBack();
+        }
 
+        private void ReadBack()
+        {
             RenderTexture previous = RenderTexture.active;
             RenderTexture.active = _rt;
             _readback.ReadPixels(new Rect(0, 0, RtSize, RtSize), 0, 0);
@@ -107,6 +111,105 @@ namespace Greenkeeper.Tests
             Assert.That(mirroredY.r, Is.LessThan(0.05f),
                 "Stamp landed at the Y-mirrored texel — the platform flip is inverted.");
             Assert.That(centerPixel.r, Is.LessThan(0.05f));
+        }
+
+        [Test]
+        public void RMaskedStamp_PreservesOtherChannels()
+        {
+            // F0.5: the mower writes height to R only — health (G) must survive.
+            var maskedMaterial = new Material(_material.shader);
+            maskedMaterial.SetFloat("_ColorMask", (float)ColorWriteMask.Red);
+            try
+            {
+                _commandBuffer.Clear();
+                _commandBuffer.SetRenderTarget(_rt);
+                _commandBuffer.ClearRenderTarget(false, true, Color.clear);
+
+                PitchStampRenderer.AppendStamp(_commandBuffer, _rt, _quad, _material,
+                    new MaterialPropertyBlock(), new StampRequest
+                    {
+                        WorldPosition = Vector3.zero,
+                        WorldRadius = 8f,
+                        Value = new Color(0.2f, 0.8f, 0.2f, 1f),
+                        Hardness = 1f
+                    }, _bounds);
+                PitchStampRenderer.AppendStamp(_commandBuffer, _rt, _quad, maskedMaterial,
+                    new MaterialPropertyBlock(), new StampRequest
+                    {
+                        WorldPosition = Vector3.zero,
+                        WorldRadius = 8f,
+                        Value = new Color(0.9f, 0.1f, 0.1f, 1f),
+                        Hardness = 1f,
+                        Mask = ColorWriteMask.Red
+                    }, _bounds);
+                Graphics.ExecuteCommandBuffer(_commandBuffer);
+                ReadBack();
+
+                Color center = _readback.GetPixel(RtSize / 2, RtSize / 2);
+                Assert.That(center.r, Is.EqualTo(0.9f).Within(0.02f), "R must take the masked write.");
+                Assert.That(center.g, Is.EqualTo(0.8f).Within(0.02f), "G must survive an R-masked stamp.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(maskedMaterial);
+            }
+        }
+
+        [Test]
+        public void MinBlendStamp_OnlyLowersTheChannel()
+        {
+            // F0.5: the GPU mirror of "cut only if current > setting".
+            var minMaterial = new Material(_material.shader);
+            minMaterial.SetFloat("_ColorMask", (float)ColorWriteMask.Red);
+            minMaterial.SetFloat("_BlendOp", (float)BlendOp.Min);
+            minMaterial.SetFloat("_MinNeutral", 1f);
+            try
+            {
+                _commandBuffer.Clear();
+                _commandBuffer.SetRenderTarget(_rt);
+                _commandBuffer.ClearRenderTarget(false, true, Color.clear);
+
+                // Tall patch at the origin, already-short patch at (8, 8).
+                PitchStampRenderer.AppendStamp(_commandBuffer, _rt, _quad, _material,
+                    new MaterialPropertyBlock(), new StampRequest
+                    {
+                        WorldPosition = Vector3.zero,
+                        WorldRadius = 3f,
+                        Value = new Color(0.8f, 0f, 0f, 1f),
+                        Hardness = 1f
+                    }, _bounds);
+                PitchStampRenderer.AppendStamp(_commandBuffer, _rt, _quad, _material,
+                    new MaterialPropertyBlock(), new StampRequest
+                    {
+                        WorldPosition = new Vector3(8f, 0f, 8f),
+                        WorldRadius = 3f,
+                        Value = new Color(0.1f, 0f, 0f, 1f),
+                        Hardness = 1f
+                    }, _bounds);
+                // One Min-blend mow stamp covering both patches.
+                PitchStampRenderer.AppendStamp(_commandBuffer, _rt, _quad, minMaterial,
+                    new MaterialPropertyBlock(), new StampRequest
+                    {
+                        WorldPosition = new Vector3(4f, 0f, 4f),
+                        WorldRadius = 12f,
+                        Value = new Color(0.3f, 0f, 0f, 1f),
+                        Hardness = 1f,
+                        Mask = ColorWriteMask.Red,
+                        BlendOp = BlendOp.Min
+                    }, _bounds);
+                Graphics.ExecuteCommandBuffer(_commandBuffer);
+                ReadBack();
+
+                Color tall = _readback.GetPixel(32, 32);
+                Color shortPatch = _readback.GetPixel(40, 40);
+                Assert.That(tall.r, Is.EqualTo(0.3f).Within(0.02f), "Min stamp must lower taller grass.");
+                Assert.That(shortPatch.r, Is.EqualTo(0.1f).Within(0.02f),
+                    "Min stamp must never raise already-short grass.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(minMaterial);
+            }
         }
 
         [Test]

@@ -44,6 +44,7 @@ GameObject:
   - component: {fileID: 2838005753851391540}
   - component: {fileID: 7841909817862893429}
   - component: {fileID: 7923292461522653447}
+  - component: {fileID: 6282163578347633038}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -136,3 +137,18 @@ MonoBehaviour:
   _pitchTarget: {fileID: 1717342806715109243}
   _sensitivity: 0.1
   _pitchLimit: 85
+--- !u!114 &6282163578347633038
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8991932003401334463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 576bebc51ade93a4b93f2424fb7098f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Greenkeeper.Gameplay::Greenkeeper.Gameplay.ToolController
+  _pitch: {fileID: 0}
+  _bridge: {fileID: 0}
+  _mowerDefinition: {fileID: 11400000, guid: ad1cc5a10380b2e42adcf8faf3e6d252, type: 2}

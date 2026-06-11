@@ -24,6 +24,24 @@ namespace Greenkeeper.Pitch
         public float RotationRad;
         public Color Value;           // channel semantics belong to the consumer (F0.4+)
         public float Hardness;        // 0 = soft falloff, 1 = hard edge
+
+        /// <summary>
+        /// Channels the stamp writes (F0.5: mower writes height to R only).
+        /// The struct default 0 is treated as All so older call sites keep
+        /// their behavior.
+        /// </summary>
+        public ColorWriteMask Mask;
+
+        /// <summary>
+        /// Blend op. Default Add (=0) keeps the classic SrcAlpha blend.
+        /// Min makes a stamp that can only LOWER channel values — the GPU
+        /// equivalent of the mow rule "write only if current &gt; setting"
+        /// (TDD §4.2); outside the falloff the shader emits the Min-neutral
+        /// value 1 so the quad corners leave the target untouched.
+        /// </summary>
+        public BlendOp BlendOp;
+
+        public ColorWriteMask EffectiveMask => Mask == 0 ? ColorWriteMask.All : Mask;
     }
 
     /// <summary>

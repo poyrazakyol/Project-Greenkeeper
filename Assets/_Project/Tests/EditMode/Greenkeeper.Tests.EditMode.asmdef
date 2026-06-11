@@ -5,6 +5,7 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "Greenkeeper.Pitch",
+        "Greenkeeper.Tools",
         "Unity.Mathematics"
     ],
     "includePlatforms": [

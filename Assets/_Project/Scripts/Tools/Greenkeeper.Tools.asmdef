@@ -3,7 +3,8 @@
     "rootNamespace": "Greenkeeper.Tools",
     "references": [
         "Greenkeeper.Core",
-        "Greenkeeper.Pitch"
+        "Greenkeeper.Pitch",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -16,6 +16,9 @@ namespace Greenkeeper.Gameplay
         public InputAction Move { get; private set; }
         public InputAction Look { get; private set; }
         public InputAction Sprint { get; private set; }
+        public InputAction UseTool { get; private set; }
+        public InputAction Interact { get; private set; }
+        public InputAction HeightAdjust { get; private set; }
 
         private InputActionMap _playerMap;
 
@@ -25,6 +28,9 @@ namespace Greenkeeper.Gameplay
             Move = _playerMap.FindAction("Move", throwIfNotFound: true);
             Look = _playerMap.FindAction("Look", throwIfNotFound: true);
             Sprint = _playerMap.FindAction("Sprint", throwIfNotFound: true);
+            UseTool = _playerMap.FindAction("UseTool", throwIfNotFound: true);
+            Interact = _playerMap.FindAction("Interact", throwIfNotFound: true);
+            HeightAdjust = _playerMap.FindAction("HeightAdjust", throwIfNotFound: true);
         }
 
         private void OnEnable()
