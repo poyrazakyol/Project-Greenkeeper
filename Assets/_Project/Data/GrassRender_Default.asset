@@ -33,6 +33,7 @@ MonoBehaviour:
   bendNormalWeight: 0.6
   bladeSpecStrength: 0.5
   bladeSpecPower: 24
+  stripeAlbedoGain: 0.25
   groundStripeContrast: 0.8
   groundSpecStrength: 0.2
   groundSpecPower: 16
