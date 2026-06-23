@@ -19,6 +19,7 @@ namespace Greenkeeper.Gameplay
         public InputAction UseTool { get; private set; }
         public InputAction Interact { get; private set; }
         public InputAction HeightAdjust { get; private set; }
+        public InputAction ToolWheel { get; private set; }
         public InputAction EndDay { get; private set; }
         public InputAction TimeScale { get; private set; }
 
@@ -33,6 +34,7 @@ namespace Greenkeeper.Gameplay
             UseTool = _playerMap.FindAction("UseTool", throwIfNotFound: true);
             Interact = _playerMap.FindAction("Interact", throwIfNotFound: true);
             HeightAdjust = _playerMap.FindAction("HeightAdjust", throwIfNotFound: true);
+            ToolWheel = _playerMap.FindAction("ToolWheel", throwIfNotFound: true);
             EndDay = _playerMap.FindAction("EndDay", throwIfNotFound: true);
             TimeScale = _playerMap.FindAction("TimeScale", throwIfNotFound: true);
         }

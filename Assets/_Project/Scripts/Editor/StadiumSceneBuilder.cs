@@ -35,6 +35,8 @@ namespace Greenkeeper.EditorTools
         private const string GrassShaderPath = "Assets/_Project/Shaders/GrassBlade.shader";
         private const string GroundShaderPath = "Assets/_Project/Shaders/PitchGround.shader";
         private const string MowerDefinitionPath = "Assets/_Project/Data/Tool_PushMower.asset";
+        private const string LinerDefinitionPath = "Assets/_Project/Data/Tool_PushLiner.asset";
+        private const string LineLayoutPath = "Assets/_Project/Data/LineLayout_Default.asset";
         private const string ChannelsDir = "Assets/_Project/Data/Channels";
         private const string MowProgressChannelPath = ChannelsDir + "/OnMowProgress.asset";
         private const string CameraNoisePath = "Assets/_Project/Data/CameraNoise_FP.asset";
@@ -132,6 +134,22 @@ namespace Greenkeeper.EditorTools
                     ScriptableObject.CreateInstance<GrassGrowthProfileSO>(), GrowthProfilePath);
                 UnityEngine.Debug.Log("[Greenkeeper] Grass growth profile created at " + GrowthProfilePath);
             }
+            if (AssetDatabase.LoadAssetAtPath<LinerToolDefinitionSO>(LinerDefinitionPath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<LinerToolDefinitionSO>(), LinerDefinitionPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Liner definition created at " + LinerDefinitionPath);
+            }
+            if (AssetDatabase.LoadAssetAtPath<LineLayoutSO>(LineLayoutPath) == null)
+            {
+                var layout = ScriptableObject.CreateInstance<LineLayoutSO>();
+                var serialized = new SerializedObject(layout);
+                serialized.FindProperty("_stadium").objectReferenceValue =
+                    AssetDatabase.LoadAssetAtPath<StadiumDefinitionSO>(StadiumDefinitionPath);
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.CreateAsset(layout, LineLayoutPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Line layout created at " + LineLayoutPath);
+            }
             AssetDatabase.SaveAssets();
         }
 
@@ -203,6 +221,8 @@ namespace Greenkeeper.EditorTools
                 // (_pitch/_bridge) are wired on the scene instance.
                 var mowerDefinition = AssetDatabase.LoadAssetAtPath<ToolDefinitionSO>(MowerDefinitionPath);
                 SetReference(toolController, "_mowerDefinition", mowerDefinition);
+                var linerDefinition = AssetDatabase.LoadAssetAtPath<LinerToolDefinitionSO>(LinerDefinitionPath);
+                SetReference(toolController, "_linerDefinition", linerDefinition);
 
                 // Feel layer (F0.7). CameraFeel._noise is a scene object,
                 // wired on the instance.
@@ -338,6 +358,12 @@ namespace Greenkeeper.EditorTools
             MowHud mowHud = new GameObject("Debug_MowHud").AddComponent<MowHud>();
             SetReference(mowHud, "_toolController", toolController);
             SetReference(mowHud, "_progressChannel", progressChannel);
+
+            // Line score debug view (M.2)
+            var lineLayout = AssetDatabase.LoadAssetAtPath<LineLayoutSO>(LineLayoutPath);
+            LineScoreHud lineScoreHud = new GameObject("Debug_LineScoreHud").AddComponent<LineScoreHud>();
+            SetReference(lineScoreHud, "_toolController", toolController);
+            SetReference(lineScoreHud, "_lineLayout", lineLayout);
 
             // Feel wiring (F0.7).
             CameraFeel cameraFeel = player.GetComponent<CameraFeel>();

@@ -1,37 +1,18 @@
-using System.Collections.Generic;
 using Greenkeeper.Pitch;
 using Greenkeeper.Tools;
 using NUnit.Framework;
-using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Greenkeeper.Tests
 {
     /// <summary>
-    /// Pure mowing core (TDD §4.2): capsule sweep cell selection and the
-    /// per-cell cut rule including the scalping boundary matrix (GDD §3.1.1).
+    /// Pure mowing core (TDD §4.2): the per-cell cut rule including the
+    /// scalping boundary matrix (GDD §3.1.1). Capsule cell selection moved to
+    /// CapsuleCellsTests at M.2.
     /// </summary>
     public class MowSweepTests
     {
-        private StadiumDefinitionSO _stadium;
-        private PitchGrid _grid;
-        private readonly List<Vector2Int> _cells = new List<Vector2Int>();
-
-        [SetUp]
-        public void SetUp()
-        {
-            _stadium = ScriptableObject.CreateInstance<StadiumDefinitionSO>();
-            _grid = PitchGrid.CreateCentered(_stadium, Allocator.Persistent);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            _grid.Dispose();
-            Object.DestroyImmediate(_stadium);
-        }
-
         private static MowCutParams DefaultParams(float cutHeightMm)
         {
             return new MowCutParams
@@ -42,43 +23,6 @@ namespace Greenkeeper.Tests
                 ScalpingCutThresholdMm = 20f,
                 ScalpingHealthDamage = 15
             };
-        }
-
-        [Test]
-        public void CollectCells_Segment_CollectsCapsuleAndNothingElse()
-        {
-            var from = new Vector3(-2f, 0f, 0f);
-            var to = new Vector3(2f, 0f, 0f);
-            const float radius = 0.6f;
-
-            MowSweep.CollectCells(_grid, from, to, radius, _cells);
-
-            Assert.That(_cells, Is.Not.Empty);
-            // Touch semantics: the capsule may clip a cell whose CENTER is up
-            // to half a cell diagonal beyond the radius, never more.
-            float halfDiagonal = _stadium.cellSizeM * 0.5f * Mathf.Sqrt(2f);
-            foreach (Vector2Int cell in _cells)
-            {
-                Vector3 center = _grid.CellToWorldCenter(cell.x, cell.y);
-                float distance = DistanceToSegmentXz(center, from, to);
-                Assert.That(distance, Is.LessThanOrEqualTo(radius + halfDiagonal + 0.001f),
-                    $"Cell {cell} cannot be touched by the capsule.");
-            }
-
-            // Inside: directly on the segment. Outside: one full cell beyond the radius.
-            Assert.That(_cells.Contains(CellAt(0f, 0.25f)), Is.True);
-            Assert.That(_cells.Contains(CellAt(0f, 1.25f)), Is.False);
-            Assert.That(_cells.Contains(CellAt(3.25f, 0.25f)), Is.False);
-        }
-
-        [Test]
-        public void CollectCells_CoincidentPoints_DegeneratesToDisc()
-        {
-            MowSweep.CollectCells(_grid, Vector3.zero, Vector3.zero, 0.6f, _cells);
-
-            Assert.That(_cells.Contains(CellAt(0.25f, 0.25f)), Is.True);
-            Assert.That(_cells.Contains(CellAt(-0.25f, -0.25f)), Is.True);
-            Assert.That(_cells.Contains(CellAt(0.75f, 0.75f)), Is.False); // rect dist ≈ 0.71
         }
 
         [Test]
@@ -134,22 +78,6 @@ namespace Greenkeeper.Tests
 
             Assert.That(result.Scalped, Is.True);
             Assert.That(result.Cell.Health, Is.EqualTo(0));
-        }
-
-        private Vector2Int CellAt(float worldX, float worldZ)
-        {
-            Assert.That(_grid.TryWorldToCell(new Vector3(worldX, 0f, worldZ), out int x, out int y), Is.True);
-            return new Vector2Int(x, y);
-        }
-
-        private static float DistanceToSegmentXz(Vector3 point, Vector3 a, Vector3 b)
-        {
-            var p = new Vector2(point.x, point.z);
-            var s = new Vector2(a.x, a.z);
-            var e = new Vector2(b.x, b.z);
-            Vector2 se = e - s;
-            float t = se.sqrMagnitude < 1e-8f ? 0f : Mathf.Clamp01(Vector2.Dot(p - s, se) / se.sqrMagnitude);
-            return Vector2.Distance(p, s + se * t);
         }
     }
 }

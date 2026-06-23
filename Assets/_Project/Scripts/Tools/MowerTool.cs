@@ -152,7 +152,7 @@ namespace Greenkeeper.Tools
             };
 
             // CPU layer: the simulation/scoring authority.
-            MowSweep.CollectCells(ctx.Grid, from, to, radius, _cellBuffer);
+            CapsuleCells.Collect(ctx.Grid, from, to, radius, _cellBuffer);
             var cells = ctx.Grid.Cells;
             float totalCutMm = 0f;
             for (int i = 0; i < _cellBuffer.Count; i++)

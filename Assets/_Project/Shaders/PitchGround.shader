@@ -34,6 +34,8 @@ Shader "Greenkeeper/PitchGround"
             SAMPLER(sampler_GrassStateRt);
             TEXTURE2D(_PatternRt);
             SAMPLER(sampler_PatternRt);
+            TEXTURE2D(_PaintRt);
+            SAMPLER(sampler_PaintRt);
             float4 _PitchUvTransform;
             half4 _GrassHealthyColor;
             half4 _GrassDryColor;
@@ -101,7 +103,15 @@ Shader "Greenkeeper/PitchGround"
                 float2 viewXz = viewDirWS.xz / max(length(viewDirWS.xz), 1e-4);
                 albedo *= 1.0 + _GroundStripeAlbedoGain * dot(patternDir, viewXz);
 
-                return half4(albedo * lighting, 1.0);
+                half3 lit = albedo * lighting;
+
+                // Paint lines (M.2): RT_Paint.r is coverage; overlay white,
+                // lit by the same main light so lines sit in the scene.
+                half paint = SAMPLE_TEXTURE2D(_PaintRt, sampler_PaintRt, pitchUv).r;
+                half3 paintColor = half3(1.0, 1.0, 1.0) * (halfLambert + 0.15);
+                lit = lerp(lit, paintColor, paint);
+
+                return half4(lit, 1.0);
             }
             ENDHLSL
         }

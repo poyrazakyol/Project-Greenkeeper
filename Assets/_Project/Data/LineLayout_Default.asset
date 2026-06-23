@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18e93566e7fad30409c69763759057f4, type: 3}
+  m_Name: LineLayout_Default
+  m_EditorClassIdentifier: Greenkeeper.Pitch::Greenkeeper.Pitch.LineLayoutSO
+  _stadium: {fileID: 11400000, guid: fbec7f18e7de35047ae8f4949f33d00e, type: 2}
+  tessellationSpacingM: 0.25
+  maxAssociationM: 1
+  coverageThresholdM: 0.15
+  coverageSampleSpacingM: 0.25

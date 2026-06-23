@@ -46,6 +46,8 @@ namespace Greenkeeper.Pitch
         private Shader _resolvedBrushShader;
         private MaterialPropertyBlock _propertyBlock;
         private Mesh _quad;
+        private Material _paintFadeMaterial;
+        private static readonly int FadeAmountId = Shader.PropertyToID("_FadeAmount");
 
         private void Awake()
         {
@@ -60,6 +62,7 @@ namespace Greenkeeper.Pitch
             _propertyBlock = new MaterialPropertyBlock();
             _quad = PitchStampRenderer.CreateQuadMesh();
             _commandBuffer = new CommandBuffer { name = "Greenkeeper.PitchStamps" };
+            _paintFadeMaterial = new Material(Shader.Find("Greenkeeper/PitchPaintFade"));
 
             ClearAllTargets();
 
@@ -68,6 +71,7 @@ namespace Greenkeeper.Pitch
             // material wiring.
             Shader.SetGlobalTexture("_GrassStateRt", GrassStateRt);
             Shader.SetGlobalTexture("_PatternRt", PatternRt);
+            Shader.SetGlobalTexture("_PaintRt", PaintRt);
             Shader.SetGlobalVector("_PitchUvTransform", Bounds.UvTransform);
         }
 
@@ -102,6 +106,26 @@ namespace Greenkeeper.Pitch
 
             Graphics.Blit(seedTexture, GrassStateRt);
             Destroy(seedTexture);
+        }
+
+        /// <summary>
+        /// Fades the painted lines on RT_Paint by subtracting <paramref
+        /// name="amount01"/> (0-1) from the coverage channel. Called once per
+        /// day-end to mirror the CPU PaintCoverage fade rate (TDD §3.4) — a
+        /// full-screen blit keeps the high-resolution lines crisp, unlike a
+        /// re-seed from the coarse CPU grid.
+        /// </summary>
+        public void FadePaint(float amount01)
+        {
+            if (amount01 <= 0f || _paintFadeMaterial == null)
+            {
+                return;
+            }
+            _paintFadeMaterial.SetFloat(FadeAmountId, amount01);
+            RenderTexture temp = RenderTexture.GetTemporary(PaintRt.descriptor);
+            Graphics.Blit(PaintRt, temp, _paintFadeMaterial);
+            Graphics.Blit(temp, PaintRt);
+            RenderTexture.ReleaseTemporary(temp);
         }
 
         public RenderTexture GetTexture(PitchRenderTarget target)
@@ -200,6 +224,10 @@ namespace Greenkeeper.Pitch
                 Destroy(material);
             }
             _brushMaterials.Clear();
+            if (_paintFadeMaterial != null)
+            {
+                Destroy(_paintFadeMaterial);
+            }
             if (_quad != null)
             {
                 Destroy(_quad);

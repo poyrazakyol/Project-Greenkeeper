@@ -60,6 +60,10 @@ namespace Greenkeeper.Gameplay
             _timeSystem.AdvanceToNextMorning();
             _timeSystem.Paused = true; // 5) the summary panel unpauses on dismiss
             _bridge.SeedFromGrid(_pitch.Grid);
+            // Visual paint fade mirrors the CPU PaintCoverage fade rate
+            // (PitchDayEndSimulation) so painted lines dim overnight at the
+            // same pace the inspector's logical value drops.
+            _bridge.FadePaint(_growthProfile.paintFadePerDay / 100f);
             _dayEndedChannel.Raise(report);
         }
 

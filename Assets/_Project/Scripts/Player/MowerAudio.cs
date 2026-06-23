@@ -82,17 +82,21 @@ namespace Greenkeeper.Gameplay
                 return;
             }
 
+            // The engine only runs while the mower is the equipped tool; the
+            // liner (and future tools) leave it silent.
+            bool mowerActive = _toolController.MowerActive;
             float speed01 = Mathf.Clamp01(
                 new Vector2(_characterController.velocity.x, _characterController.velocity.z).magnitude / 4f);
 
-            float targetVolume = mower.IsEngaged ? _engagedVolume : _idleVolume;
-            float targetPitch = (mower.IsEngaged ? _engagedPitch : _idlePitch) + speed01 * _speedPitchGain;
+            bool engaged = mowerActive && mower.IsEngaged;
+            float targetVolume = mowerActive ? (engaged ? _engagedVolume : _idleVolume) : 0f;
+            float targetPitch = (engaged ? _engagedPitch : _idlePitch) + speed01 * _speedPitchGain;
             float blend = Mathf.Clamp01(Time.deltaTime / Mathf.Max(_responseSeconds, 0.01f));
             _engineSource.volume = Mathf.Lerp(_engineSource.volume, targetVolume, blend);
             _engineSource.pitch = Mathf.Lerp(_engineSource.pitch, targetPitch, blend);
 
             _swishSource.volume = Mathf.Lerp(
-                _swishSource.volume, mower.SmoothedCutRate01 * _swishMaxVolume, blend);
+                _swishSource.volume, (engaged ? mower.SmoothedCutRate01 : 0f) * _swishMaxVolume, blend);
 
             if (mower.BasketFull && !_basketWasFull)
             {
