@@ -8,3 +8,4 @@
 | 2026-06-11 | Claude Code | Pattern stamp'inde alpha blend yerine "son yazan kazanır" varyantı — kesişen zıt stroke'larda yönlerin ortalanıp desenin silikleşmesini önler (F0.6 Faz 0 kabulü) |
 | 2026-06-12 | Claude Code | "Günü Bitir" için diegetik yatak/ofis etkileşim noktası (TDD §8'in tarif ettiği; M.1'de K tuşu) — M.9 cilasında değerlendirilir |
 | 2026-06-12 | Poyraz | Gün içi atmosfer/ışık geçişi (sabah-öğle-akşam görsel fark) — M.9 cila kapsamında değerlendirilebilir |
+| 2026-06-12 | Poyraz | **Çizgi rehberlik sistemi (ghost line overlay):** ideal çizgi geometrisi (LineGeometry) zeminde yarı saydam/hayalet overlay olarak gösterilmeli; şu an oyuncu nereye çizgi çekeceğini bilemiyor. M.2'de skorlama matematiği önceliklendi, rehberlik eksik kaldı. **M.4 denetçi bloğundan ÖNCE ele alınmalı.** GDD §4.2 ekipman ilerlemesiyle ilişkilendirilebilir (amatör kademede zayıf/yok, üst kademede güçlü rehberlik). |
