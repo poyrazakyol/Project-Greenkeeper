@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Greenkeeper.Core;
 using UnityEngine;
 
 namespace Greenkeeper.Pitch
@@ -11,10 +12,12 @@ namespace Greenkeeper.Pitch
     public sealed class PitchController : MonoBehaviour
     {
         [SerializeField] private StadiumDefinitionSO _stadium;
+        [Tooltip("Core time service: the tick follows GAME time (accelerable), not real time. Optional — falls back to real time when absent.")]
+        [SerializeField] private TimeSystem _timeSystem;
         [SerializeField] private float _tickIntervalSeconds = 0.25f;
 
-        [Tooltip("Moisture units (0-100 scale) evaporated per second. Placeholder rate; becomes weather-driven data in Phase 2.")]
-        [SerializeField] private float _moistureEvaporationPerSecond = 0.2f;
+        [Tooltip("Moisture units (0-100 scale) evaporated per game-time second. Placeholder rate; becomes weather-driven data in Phase 2. Runs on ScaledDeltaTime, so it stops at the evening hold (one day's worth max).")]
+        [SerializeField] private float _moistureEvaporationPerSecond = 0.1f;
 
         public PitchGrid Grid { get; private set; }
         public StadiumDefinitionSO Stadium => _stadium;
@@ -33,7 +36,7 @@ namespace Greenkeeper.Pitch
 
         private void Update()
         {
-            _tickTimer += Time.deltaTime;
+            _tickTimer += _timeSystem != null ? _timeSystem.ScaledDeltaTime : Time.deltaTime;
             while (_tickTimer >= _tickIntervalSeconds)
             {
                 _tickTimer -= _tickIntervalSeconds;

@@ -4,6 +4,7 @@ using Greenkeeper.Debugging;
 using Greenkeeper.Gameplay;
 using Greenkeeper.Pitch;
 using Greenkeeper.Tools;
+using Greenkeeper.UI;
 using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -37,12 +38,17 @@ namespace Greenkeeper.EditorTools
         private const string ChannelsDir = "Assets/_Project/Data/Channels";
         private const string MowProgressChannelPath = ChannelsDir + "/OnMowProgress.asset";
         private const string CameraNoisePath = "Assets/_Project/Data/CameraNoise_FP.asset";
+        private const string GrowthProfilePath = "Assets/_Project/Data/GrassGrowth_Default.asset";
+        private const string DayEndedChannelPath = ChannelsDir + "/OnDayEnded.asset";
 
         [MenuItem("Greenkeeper/Build Stadium Scene")]
         public static void Build()
         {
             // GPU frame timings feed the F2 HUD (T1 measurement, TDD §13).
             PlayerSettings.enableFrameTimingStats = true;
+            // Keep ticking when the Game view loses focus — otherwise time
+            // appears frozen during playtesting (M.1 day clock investigation).
+            PlayerSettings.runInBackground = true;
 
             Material groundMaterial = CreateOrUpdateGroundMaterial();
             EnsureStadiumDefinitionAsset();
@@ -113,6 +119,18 @@ namespace Greenkeeper.EditorTools
                 AssetDatabase.CreateAsset(
                     ScriptableObject.CreateInstance<FloatEventChannelSO>(), MowProgressChannelPath);
                 UnityEngine.Debug.Log("[Greenkeeper] Mow progress channel created at " + MowProgressChannelPath);
+            }
+            if (AssetDatabase.LoadAssetAtPath<DayEndedEventChannelSO>(DayEndedChannelPath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<DayEndedEventChannelSO>(), DayEndedChannelPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Day ended channel created at " + DayEndedChannelPath);
+            }
+            if (AssetDatabase.LoadAssetAtPath<GrassGrowthProfileSO>(GrowthProfilePath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<GrassGrowthProfileSO>(), GrowthProfilePath);
+                UnityEngine.Debug.Log("[Greenkeeper] Grass growth profile created at " + GrowthProfilePath);
             }
             AssetDatabase.SaveAssets();
         }
@@ -267,9 +285,13 @@ namespace Greenkeeper.EditorTools
             // reference held from before that call goes fake-null.
             var stadiumDefinition = AssetDatabase.LoadAssetAtPath<StadiumDefinitionSO>(StadiumDefinitionPath);
 
+            // Time service (M.1)
+            TimeSystem timeSystem = new GameObject("TimeSystem").AddComponent<TimeSystem>();
+
             var pitchGo = new GameObject("Pitch");
             PitchController pitchController = pitchGo.AddComponent<PitchController>();
             SetReference(pitchController, "_stadium", stadiumDefinition);
+            SetReference(pitchController, "_timeSystem", timeSystem);
 
             // GPU render bridge (F0.3)
             var brushShader = AssetDatabase.LoadAssetAtPath<Shader>(BrushShaderPath);
@@ -321,10 +343,32 @@ namespace Greenkeeper.EditorTools
             CameraFeel cameraFeel = player.GetComponent<CameraFeel>();
             SetReference(cameraFeel, "_noise", cameraNoise);
 
+            // Day-end pipeline (M.1)
+            var dayEndedChannel = AssetDatabase.LoadAssetAtPath<DayEndedEventChannelSO>(DayEndedChannelPath);
+            var growthProfile = AssetDatabase.LoadAssetAtPath<GrassGrowthProfileSO>(GrowthProfilePath);
+
             MowCompletionCelebration celebration =
                 new GameObject("MowCompletion").AddComponent<MowCompletionCelebration>();
             SetReference(celebration, "_progressChannel", progressChannel);
+            SetReference(celebration, "_dayEndedChannel", dayEndedChannel);
             SetReference(celebration, "_cameraFeel", cameraFeel);
+
+            DayEndController dayEndController =
+                new GameObject("DayEndController").AddComponent<DayEndController>();
+            SetReference(dayEndController, "_timeSystem", timeSystem);
+            SetReference(dayEndController, "_pitch", pitchController);
+            SetReference(dayEndController, "_bridge", renderBridge);
+            SetReference(dayEndController, "_growthProfile", growthProfile);
+            SetReference(dayEndController, "_dayEndedChannel", dayEndedChannel);
+            SetReference(dayEndController, "_input", player.GetComponent<PlayerInputProvider>());
+
+            MorningSummaryPanel summaryPanel =
+                new GameObject("UI_MorningSummary").AddComponent<MorningSummaryPanel>();
+            SetReference(summaryPanel, "_dayEndedChannel", dayEndedChannel);
+            SetReference(summaryPanel, "_timeSystem", timeSystem);
+
+            TimeHud timeHud = new GameObject("Debug_TimeHud").AddComponent<TimeHud>();
+            SetReference(timeHud, "_timeSystem", timeSystem);
 
             EditorSceneManager.SaveScene(scene, ScenesDir + "/Stadium.unity");
         }

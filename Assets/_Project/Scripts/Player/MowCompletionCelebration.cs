@@ -6,12 +6,13 @@ namespace Greenkeeper.Gameplay
     /// <summary>
     /// Completion satisfaction moment (F0.7, TDD §12): the first time the mow
     /// progress channel crosses the threshold, play a sting and pulse the
-    /// camera. Once per session — grass does not regrow in Phase 0; the
-    /// day-end reset re-arms this at M.1.
+    /// camera. Re-armed every morning (M.1): grass grows back overnight, so
+    /// each day offers a fresh completion.
     /// </summary>
     public sealed class MowCompletionCelebration : MonoBehaviour
     {
         [SerializeField] private FloatEventChannelSO _progressChannel;
+        [SerializeField] private DayEndedEventChannelSO _dayEndedChannel;
         [SerializeField] private CameraFeel _cameraFeel;
         [SerializeField, Range(0.5f, 1f)] private float _threshold = 0.99f;
         [SerializeField] private float _pulseAmplitude = 1.4f;
@@ -35,6 +36,10 @@ namespace Greenkeeper.Gameplay
             {
                 _progressChannel.Subscribe(OnProgress);
             }
+            if (_dayEndedChannel != null)
+            {
+                _dayEndedChannel.Subscribe(OnDayEnded);
+            }
         }
 
         private void OnDisable()
@@ -43,6 +48,15 @@ namespace Greenkeeper.Gameplay
             {
                 _progressChannel.Unsubscribe(OnProgress);
             }
+            if (_dayEndedChannel != null)
+            {
+                _dayEndedChannel.Unsubscribe(OnDayEnded);
+            }
+        }
+
+        private void OnDayEnded(Greenkeeper.Core.DayReport report)
+        {
+            _fired = false; // a new day, a new completion to earn
         }
 
         private void OnProgress(float progress01)

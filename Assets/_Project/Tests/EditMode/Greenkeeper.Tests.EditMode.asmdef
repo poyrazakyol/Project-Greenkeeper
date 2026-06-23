@@ -4,6 +4,7 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
+        "Greenkeeper.Core",
         "Greenkeeper.Pitch",
         "Greenkeeper.Tools",
         "Greenkeeper.Gameplay",

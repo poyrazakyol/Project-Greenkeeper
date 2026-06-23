@@ -6,6 +6,7 @@
         "Greenkeeper.Pitch",
         "Greenkeeper.Tools",
         "Greenkeeper.Gameplay",
+        "Greenkeeper.UI",
         "Greenkeeper.Debug",
         "Unity.Cinemachine",
         "Unity.InputSystem"

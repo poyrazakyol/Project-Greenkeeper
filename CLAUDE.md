@@ -14,7 +14,7 @@ Bu repo iki otorite dokümanına bağlıdır. Her oturumda göreve başlamadan i
 ## Mevcut Durum
 
 - **Aktif faz:** MVP — "Döngü kapanışı" (Faz 0 ✅ 2026-06-12: dış test "bırakamadım" kriteri geçti)
-- **Aktif blok:** M.1 (TimeSystem + Günü Bitir + gün-sonu simülasyonu (büyüme, solma) + sabah özeti)
+- **Aktif blok:** M.2 (LinerTool + LineLayoutSO + stroke kaydı + düzgünlük hesabı)
 - Blok tanımları: TDD §12. Blok ilerleyişi `Docs/PROGRESS.md` dosyasında takip edilir; bir blok kapanınca orayı güncelle.
 
 ## Kapsam Disiplini (EN ÖNEMLİ KURAL)

@@ -3,7 +3,8 @@
     "rootNamespace": "Greenkeeper.UI",
     "references": [
         "Greenkeeper.Core",
-        "Greenkeeper.Gameplay"
+        "Greenkeeper.Gameplay",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
