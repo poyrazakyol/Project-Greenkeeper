@@ -18,17 +18,24 @@ namespace Greenkeeper.Gameplay
         [SerializeField] private PitchRenderBridge _bridge;
         [SerializeField] private ToolDefinitionSO _mowerDefinition;
         [SerializeField] private LinerToolDefinitionSO _linerDefinition;
+        [SerializeField] private HoseToolDefinitionSO _hoseDefinition;
 
         public MowerTool Mower { get; private set; }
         public LinerTool Liner { get; private set; }
+        public HoseTool Hose { get; private set; }
         public ITool CurrentTool { get; private set; }
         public bool MowerActive => CurrentTool == Mower;
+        public bool HoseActive => CurrentTool == Hose;
+        public string CurrentToolName =>
+            CurrentTool == Mower ? "Mower" : CurrentTool == Liner ? "Liner" : "Hose";
 
         private PlayerInputProvider _input;
         private ITool[] _tools;
         private int _currentIndex;
         private Transform _mowerVisual;
         private Transform _linerVisual;
+        private Transform _hoseVisual;
+        private Camera _camera;
 
         private void Awake()
         {
@@ -39,7 +46,8 @@ namespace Greenkeeper.Gameplay
             // order of Starts on one GameObject is undefined.
             Mower = new MowerTool(_mowerDefinition);
             Liner = new LinerTool(_linerDefinition);
-            _tools = new ITool[] { Mower, Liner };
+            Hose = new HoseTool(_hoseDefinition);
+            _tools = new ITool[] { Mower, Liner, Hose };
             CurrentTool = Mower;
         }
 
@@ -49,6 +57,7 @@ namespace Greenkeeper.Gameplay
             // components whose own Awakes must have run.
             _mowerVisual = BuildPlaceholderMowerVisual();
             _linerVisual = BuildPlaceholderLinerVisual();
+            _hoseVisual = BuildPlaceholderHoseVisual();
             CurrentTool.OnEquip(BuildContext());
             ApplyVisualForCurrentTool();
         }
@@ -65,6 +74,18 @@ namespace Greenkeeper.Gameplay
             if (MowerActive)
             {
                 UpdateMowerInput(ctx);
+            }
+            else if (HoseActive)
+            {
+                float scroll = _input.HeightAdjust.ReadValue<float>();
+                if (scroll > 0.01f)
+                {
+                    Hose.CyclePressure(1);
+                }
+                else if (scroll < -0.01f)
+                {
+                    Hose.CyclePressure(-1);
+                }
             }
 
             if (_input.UseTool.IsPressed())
@@ -113,17 +134,31 @@ namespace Greenkeeper.Gameplay
         {
             if (_mowerVisual != null)
             {
-                _mowerVisual.gameObject.SetActive(MowerActive);
+                _mowerVisual.gameObject.SetActive(CurrentTool == Mower);
             }
             if (_linerVisual != null)
             {
-                _linerVisual.gameObject.SetActive(!MowerActive);
+                _linerVisual.gameObject.SetActive(CurrentTool == Liner);
+            }
+            if (_hoseVisual != null)
+            {
+                _hoseVisual.gameObject.SetActive(CurrentTool == Hose);
             }
         }
 
         private ToolContext BuildContext()
         {
-            var lookRay = new Ray(transform.position + Vector3.up * 1.65f, transform.forward);
+            // The body only yaws; pitch lives on the camera rig. Aimed tools
+            // (hose) need the real view direction, so the look ray follows the
+            // rendered camera. PlayerForward stays body-forward (horizontal)
+            // for deck/cart tools (mower, liner).
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+            Ray lookRay = _camera != null
+                ? new Ray(_camera.transform.position, _camera.transform.forward)
+                : new Ray(transform.position + Vector3.up * 1.65f, transform.forward);
             return new ToolContext(
                 transform.position, transform.forward, lookRay,
                 _pitch.Grid, _bridge.EnqueueStampAction);
@@ -178,6 +213,23 @@ namespace Greenkeeper.Gameplay
             handle.transform.localPosition = new Vector3(0f, 0.6f, -0.35f);
             handle.transform.localRotation = Quaternion.Euler(35f, 0f, 0f);
             handle.transform.localScale = new Vector3(0.05f, 0.45f, 0.05f);
+
+            return root;
+        }
+
+        /// <summary>Held-hose nozzle placeholder, just to the lower-right of view.</summary>
+        private Transform BuildPlaceholderHoseVisual()
+        {
+            var root = new GameObject("HoseVisual_Placeholder").transform;
+            root.SetParent(transform, false);
+            root.localPosition = new Vector3(0.25f, 1.2f, 0.4f);
+
+            GameObject nozzle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            Destroy(nozzle.GetComponent<Collider>());
+            nozzle.name = "Nozzle";
+            nozzle.transform.SetParent(root, false);
+            nozzle.transform.localRotation = Quaternion.Euler(75f, 0f, 0f);
+            nozzle.transform.localScale = new Vector3(0.04f, 0.2f, 0.04f);
 
             return root;
         }

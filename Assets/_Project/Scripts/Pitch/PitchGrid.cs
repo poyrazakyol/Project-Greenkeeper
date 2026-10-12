@@ -23,6 +23,18 @@ namespace Greenkeeper.Pitch
 
         public int CellCount => Width * Height;
 
+        /// <summary>
+        /// Set by anything that writes cell moisture (hose, in-day tick, day
+        /// end) so the render bridge can refresh the visual moisture channel
+        /// from this CPU authority (TDD §3.4 "görsel tint güncelleme ihtiyacı
+        /// işaretleme").
+        /// </summary>
+        public bool MoistureDirty { get; private set; }
+
+        public void MarkMoistureDirty() => MoistureDirty = true;
+
+        public void ClearMoistureDirty() => MoistureDirty = false;
+
         public PitchGrid(int width, int height, float cellSize, Vector2 worldOrigin,
             Allocator allocator = Allocator.Persistent)
         {

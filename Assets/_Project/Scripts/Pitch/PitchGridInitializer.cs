@@ -12,14 +12,16 @@ namespace Greenkeeper.Pitch
         public byte BaseHealth;
         public byte BaseMoisture;
         public float GrassHeightJitterMm;
+        public float MoistureJitter;
         public uint Seed;
     }
 
     /// <summary>
     /// Deterministic initial fill: base values + seeded jitter. Same seed and
     /// params always produce the identical grid (save/load and test guarantee).
-    /// Moisture gets a gradient along X so the F1 overlay reveals grid→world
-    /// orientation at a glance.
+    /// Moisture is flat around the base (the overnight equilibrium) with small
+    /// per-cell jitter — no spatial gradient, so no part of the pitch reads
+    /// wet or dry before the player touches it.
     /// </summary>
     public static class PitchGridInitializer
     {
@@ -33,8 +35,8 @@ namespace Greenkeeper.Pitch
                     float jitter = random.NextFloat(-p.GrassHeightJitterMm, p.GrassHeightJitterMm);
                     float heightMm = math.max(0f, p.BaseGrassHeightMm + jitter);
 
-                    float gradient = grid.Width > 1 ? x / (float)(grid.Width - 1) : 0f;
-                    int moisture = (int)math.clamp(p.BaseMoisture - 15f + 30f * gradient, 0f, 100f);
+                    float moistureJitter = random.NextFloat(-p.MoistureJitter, p.MoistureJitter);
+                    int moisture = (int)math.clamp(math.round(p.BaseMoisture + moistureJitter), 0f, 100f);
 
                     grid.Cells[grid.IndexOf(x, y)] = new CellState
                     {

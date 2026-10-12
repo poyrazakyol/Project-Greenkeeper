@@ -99,6 +99,30 @@ namespace Greenkeeper.Pitch
             Shader.SetGlobalFloat("_GroundSpecPower", _settings.groundSpecPower);
             Shader.SetGlobalFloat("_GroundBendNormalWeight", _settings.bendNormalWeight);
             Shader.SetGlobalFloat("_GroundStripeAlbedoGain", _settings.stripeAlbedoGain);
+
+            // Moisture dose visuals (M.3): shared by blades and ground so the
+            // wet look / dry tint read consistently across the LOD bands.
+            Shader.SetGlobalFloat("_PuddleThreshold", _settings.puddleThreshold);
+            Shader.SetGlobalFloat("_DryThreshold", _settings.dryThreshold);
+            Shader.SetGlobalColor("_MoistureDryColor", _settings.moistureDryColor);
+            Shader.SetGlobalFloat("_WetStart", _settings.wetStart);
+            // Guard against an inverted/zero-width ramp from inspector edits.
+            Shader.SetGlobalFloat("_WetFull", Mathf.Max(_settings.wetFull, _settings.wetStart + 0.01f));
+            Shader.SetGlobalFloat("_WetDarken", _settings.wetDarken);
+            Shader.SetGlobalFloat("_WetSaturation", _settings.wetSaturation);
+            Shader.SetGlobalFloat("_WetGloss", _settings.wetGloss);
+            Shader.SetGlobalFloat("_WetSheenPower", _settings.wetSheenPower);
+            Shader.SetGlobalColor("_PuddleWaterColor", _settings.puddleWaterColor);
+            Shader.SetGlobalFloat("_PuddleOpacity", _settings.puddleOpacity);
+            Shader.SetGlobalColor("_PuddleSkyColor", _settings.puddleSkyColor);
+            Shader.SetGlobalFloat("_PuddleSpecular", _settings.puddleSpecular);
+            Shader.SetGlobalFloat("_PuddleGlintPower", _settings.puddleGlintPower);
+            Shader.SetGlobalFloat("_PuddleReflection", _settings.puddleReflection);
+            Shader.SetGlobalFloat("_PuddleRipple", _settings.puddleRipple);
+            Shader.SetGlobalFloat("_PuddleNoiseScale", Mathf.Max(0.05f, _settings.puddleNoiseScaleM));
+            Shader.SetGlobalFloat("_PuddleCoverageAtThreshold", _settings.puddleCoverageAtThreshold);
+            Shader.SetGlobalFloat("_PuddleCoverageAtFull", _settings.puddleCoverageAtFull);
+            Shader.SetGlobalFloat("_PuddleCoverageExponent", _settings.puddleCoverageExponent);
         }
 
         private void Update()

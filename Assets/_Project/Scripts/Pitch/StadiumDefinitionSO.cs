@@ -24,7 +24,10 @@ namespace Greenkeeper.Pitch
         // 0-60 mm CellState range.
         public float initialGrassHeightMm = 52f;
         [Range(0, 100)] public int initialHealth = 70;
-        [Range(0, 100)] public int initialMoisture = 55;
+        [Tooltip("Flat starting moisture; matches the overnight equilibrium target (GrassGrowthProfileSO) so day 1 starts settled.")]
+        [Range(0, 100)] public int initialMoisture = 50;
+        [Tooltip("Per-cell random moisture variation (± units) around the flat base.")]
+        public float initialMoistureJitter = 3f;
         public float grassHeightJitterMm = 6f;
         public int initialStateSeed = 1337;
 
@@ -36,6 +39,7 @@ namespace Greenkeeper.Pitch
                 BaseHealth = (byte)initialHealth,
                 BaseMoisture = (byte)initialMoisture,
                 GrassHeightJitterMm = grassHeightJitterMm,
+                MoistureJitter = initialMoistureJitter,
                 Seed = (uint)initialStateSeed
             };
         }

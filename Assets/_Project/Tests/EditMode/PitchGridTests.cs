@@ -77,6 +77,16 @@ namespace Greenkeeper.Tests
         }
 
         [Test]
+        public void MoistureDirty_MarkAndClear()
+        {
+            Assert.That(_grid.MoistureDirty, Is.False, "A fresh grid starts clean.");
+            _grid.MarkMoistureDirty();
+            Assert.That(_grid.MoistureDirty, Is.True);
+            _grid.ClearMoistureDirty();
+            Assert.That(_grid.MoistureDirty, Is.False);
+        }
+
+        [Test]
         public void Dispose_ReleasesNativeArray()
         {
             _grid.Dispose();

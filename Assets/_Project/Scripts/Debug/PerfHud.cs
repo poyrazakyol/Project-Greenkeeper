@@ -70,8 +70,12 @@ namespace Greenkeeper.Debugging
             {
                 line += $"   Stamps {_renderBridge.LastStampCount} ({_renderBridge.LastBuildExecuteMs:F2} ms)";
             }
-            GUI.Box(new Rect(8f, 8f, 860f, 24f), GUIContent.none);
-            GUI.Label(new Rect(14f, 11f, 850f, 20f), line);
+            if (_renderBridge != null && _renderBridge.LastMoistureSyncMs > 0.0)
+            {
+                line += $"   MoistSync {_renderBridge.LastMoistureSyncMs:F2} ms";
+            }
+            GUI.Box(new Rect(8f, 8f, 980f, 24f), GUIContent.none);
+            GUI.Label(new Rect(14f, 11f, 970f, 20f), line);
         }
     }
 }

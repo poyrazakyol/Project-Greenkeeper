@@ -55,6 +55,17 @@ Shader "Greenkeeper/GrassBlade"
             half4 _GrassHealthyColor;
             half4 _GrassDryColor;
             half _GrassMoistureDarken;
+            // Moisture dose visuals (M.3, globals from GrassRenderer). Blades
+            // only darken/saturate/gloss when wet; standing water is drawn on
+            // the ground (PitchGround), never by whitening blades.
+            half _DryThreshold;
+            half4 _MoistureDryColor;
+            half _WetStart;
+            half _WetFull;
+            half _WetDarken;
+            half _WetSaturation;
+            half _WetGloss;
+            half _WetSheenPower;
 
             // Material-level (set once from GrassRenderSettingsSO).
             float _BladeWidth;
@@ -158,12 +169,33 @@ Shader "Greenkeeper/GrassBlade"
                 half halfLambert = saturate(dot(normalWS, mainLight.direction)) * 0.5 + 0.5;
                 float3 viewDirWS = normalize(GetWorldSpaceViewDir(positionWS));
                 float3 halfDir = normalize(mainLight.direction + viewDirWS);
-                half specular = pow(saturate(dot(normalWS, halfDir)), _SpecPower) * _SpecStrength;
+                // Wetness (GDD §3.1.4): 0 at the flat baseline (_WetStart),
+                // 1 at the puddle threshold (_WetFull) — every cell above it
+                // reads fully wet whether or not water stands there.
+                half moisture = state.b;
+                half wet = smoothstep(_WetStart, _WetFull, moisture);
+
+                // Narrow stripe specular plus a broad wet sheen visible from
+                // most angles. Both multiply albedo below, so the sheen is a
+                // green gloss and can never whiten the blade.
+                half nDotH = saturate(dot(normalWS, halfDir));
+                half specular = pow(nDotH, _SpecPower) * _SpecStrength
+                    + pow(nDotH, _WetSheenPower) * wet * _WetGloss;
                 half3 lighting = mainLight.color * (halfLambert + specular) + SampleSH(normalWS);
 
                 half3 albedo = lerp(_GrassDryColor.rgb, _GrassHealthyColor.rgb, state.g);
-                albedo *= lerp(1.0, _GrassMoistureDarken, state.b);
+                albedo *= lerp(1.0, _GrassMoistureDarken, moisture);
+                albedo *= lerp(1.0, _WetDarken, wet); // watered grass reads clearly darker
                 albedo *= lerp(_RootDarken, 1.0, heightFrac);
+
+                // Wet grass reads deeper and more saturated (luma-preserving
+                // push away from grey, on top of the darkening above).
+                half luma = dot(albedo, half3(0.299, 0.587, 0.114));
+                albedo = max(lerp(luma.xxx, albedo, 1.0 + _WetSaturation * wet), 0.0);
+
+                // Dry tint, soft ramp below the dry threshold.
+                half dry = 1.0 - smoothstep(_DryThreshold * 0.5, _DryThreshold, moisture);
+                albedo = lerp(albedo, _MoistureDryColor.rgb, dry * 0.7);
 
                 // Direct albedo stripe term (F0.7 contrast polish): grass bent
                 // away from the viewer reads lighter, toward reads darker —

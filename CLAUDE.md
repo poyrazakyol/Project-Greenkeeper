@@ -14,7 +14,7 @@ Bu repo iki otorite dokümanına bağlıdır. Her oturumda göreve başlamadan i
 ## Mevcut Durum
 
 - **Aktif faz:** MVP — "Döngü kapanışı" (Faz 0 ✅ 2026-06-12: dış test "bırakamadım" kriteri geçti)
-- **Aktif blok:** M.3 (HoseTool + nem simülasyonu + doz uçları)
+- **Aktif blok:** M.3.5 (Çizgi rehberliği — ghost line overlay, ekipman kademesine bağlı; M.4 öncesi ara blok)
 - Blok tanımları: TDD §12. Blok ilerleyişi `Docs/PROGRESS.md` dosyasında takip edilir; bir blok kapanınca orayı güncelle.
 
 ## Kapsam Disiplini (EN ÖNEMLİ KURAL)

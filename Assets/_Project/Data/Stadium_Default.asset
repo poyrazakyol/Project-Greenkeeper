@@ -19,6 +19,7 @@ MonoBehaviour:
   gridHeight: 140
   initialGrassHeightMm: 52
   initialHealth: 70
-  initialMoisture: 55
+  initialMoisture: 50
+  initialMoistureJitter: 3
   grassHeightJitterMm: 6
   initialStateSeed: 1337

@@ -155,6 +155,7 @@ MonoBehaviour:
   _bridge: {fileID: 0}
   _mowerDefinition: {fileID: 11400000, guid: ad1cc5a10380b2e42adcf8faf3e6d252, type: 2}
   _linerDefinition: {fileID: 11400000, guid: 4cb78586408f21947aa78ae4a21592c2, type: 2}
+  _hoseDefinition: {fileID: 11400000, guid: 0ed05fbf458bbe8438c24c56166e256d, type: 2}
 --- !u!114 &3258836876534785076
 MonoBehaviour:
   m_ObjectHideFlags: 0

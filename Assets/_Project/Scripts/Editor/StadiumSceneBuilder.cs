@@ -36,6 +36,7 @@ namespace Greenkeeper.EditorTools
         private const string GroundShaderPath = "Assets/_Project/Shaders/PitchGround.shader";
         private const string MowerDefinitionPath = "Assets/_Project/Data/Tool_PushMower.asset";
         private const string LinerDefinitionPath = "Assets/_Project/Data/Tool_PushLiner.asset";
+        private const string HoseDefinitionPath = "Assets/_Project/Data/Tool_PushHose.asset";
         private const string LineLayoutPath = "Assets/_Project/Data/LineLayout_Default.asset";
         private const string ChannelsDir = "Assets/_Project/Data/Channels";
         private const string MowProgressChannelPath = ChannelsDir + "/OnMowProgress.asset";
@@ -140,6 +141,12 @@ namespace Greenkeeper.EditorTools
                     ScriptableObject.CreateInstance<LinerToolDefinitionSO>(), LinerDefinitionPath);
                 UnityEngine.Debug.Log("[Greenkeeper] Liner definition created at " + LinerDefinitionPath);
             }
+            if (AssetDatabase.LoadAssetAtPath<HoseToolDefinitionSO>(HoseDefinitionPath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<HoseToolDefinitionSO>(), HoseDefinitionPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Hose definition created at " + HoseDefinitionPath);
+            }
             if (AssetDatabase.LoadAssetAtPath<LineLayoutSO>(LineLayoutPath) == null)
             {
                 var layout = ScriptableObject.CreateInstance<LineLayoutSO>();
@@ -223,6 +230,8 @@ namespace Greenkeeper.EditorTools
                 SetReference(toolController, "_mowerDefinition", mowerDefinition);
                 var linerDefinition = AssetDatabase.LoadAssetAtPath<LinerToolDefinitionSO>(LinerDefinitionPath);
                 SetReference(toolController, "_linerDefinition", linerDefinition);
+                var hoseDefinition = AssetDatabase.LoadAssetAtPath<HoseToolDefinitionSO>(HoseDefinitionPath);
+                SetReference(toolController, "_hoseDefinition", hoseDefinition);
 
                 // Feel layer (F0.7). CameraFeel._noise is a scene object,
                 // wired on the instance.
@@ -364,6 +373,12 @@ namespace Greenkeeper.EditorTools
             LineScoreHud lineScoreHud = new GameObject("Debug_LineScoreHud").AddComponent<LineScoreHud>();
             SetReference(lineScoreHud, "_toolController", toolController);
             SetReference(lineScoreHud, "_lineLayout", lineLayout);
+
+            // Hose / moisture dose debug view (M.3)
+            HoseHud hoseHud = new GameObject("Debug_HoseHud").AddComponent<HoseHud>();
+            SetReference(hoseHud, "_toolController", toolController);
+            SetReference(hoseHud, "_pitch", pitchController);
+            SetReference(hoseHud, "_grassSettings", grassSettings);
 
             // Feel wiring (F0.7).
             CameraFeel cameraFeel = player.GetComponent<CameraFeel>();

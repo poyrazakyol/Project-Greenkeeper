@@ -9,7 +9,10 @@ namespace Greenkeeper.Pitch
     /// Owns the GPU render texture set (TDD §3.2) and executes the per-frame
     /// stamp queue as one CommandBuffer in LateUpdate. RTs are visual-only;
     /// game logic never reads them back (CPU/GPU authority split, TDD §3.1).
-    /// Day-end bulk refresh from the CPU grid arrives with M.1.
+    /// The moisture channel (RT_GrassState.B) is driven from the CPU grid:
+    /// whenever the grid's moisture is dirty it is re-uploaded (throttled),
+    /// so the screen always reflects the simulation's water, diffusion and
+    /// evaporation included.
     /// </summary>
     public sealed class PitchRenderBridge : MonoBehaviour
     {
@@ -23,12 +26,18 @@ namespace Greenkeeper.Pitch
         [SerializeField] private int _patternSize = 2048;
         [SerializeField] private int _paintSize = 4096;
 
+        [Header("Moisture visual sync")]
+        [Tooltip("Minimum real-time interval between moisture re-uploads while the grid is dirty.")]
+        [SerializeField] private float _moistureSyncIntervalSeconds = 0.1f;
+
         public RenderTexture GrassStateRt { get; private set; }
         public RenderTexture PatternRt { get; private set; }
         public RenderTexture PaintRt { get; private set; }
         public PitchBounds Bounds { get; private set; }
         public int LastStampCount { get; private set; }
         public double LastBuildExecuteMs { get; private set; }
+        /// <summary>CPU cost of the last moisture re-upload (F2 HUD).</summary>
+        public double LastMoistureSyncMs { get; private set; }
 
         /// <summary>
         /// Cached delegate for ToolContext so per-frame context building does
@@ -49,6 +58,13 @@ namespace Greenkeeper.Pitch
         private Material _paintFadeMaterial;
         private static readonly int FadeAmountId = Shader.PropertyToID("_FadeAmount");
 
+        private readonly Stopwatch _syncStopwatch = new Stopwatch();
+        private Material _moistureSyncMaterial;
+        private Texture2D _moistureTexture;
+        private CellState[] _cellCopy;
+        private byte[] _moistureBytes;
+        private float _moistureSyncTimer;
+
         private void Awake()
         {
             Bounds = PitchBounds.FromStadium(_stadium);
@@ -63,6 +79,7 @@ namespace Greenkeeper.Pitch
             _quad = PitchStampRenderer.CreateQuadMesh();
             _commandBuffer = new CommandBuffer { name = "Greenkeeper.PitchStamps" };
             _paintFadeMaterial = new Material(Shader.Find("Greenkeeper/PitchPaintFade"));
+            _moistureSyncMaterial = new Material(Shader.Find("Greenkeeper/PitchMoistureSync"));
 
             ClearAllTargets();
 
@@ -106,6 +123,57 @@ namespace Greenkeeper.Pitch
 
             Graphics.Blit(seedTexture, GrassStateRt);
             Destroy(seedTexture);
+            grid.ClearMoistureDirty(); // B was just written from the grid
+        }
+
+        private void TrySyncMoisture()
+        {
+            // Timer keeps running while clean, so the first change after an
+            // idle period uploads immediately (no added latency on spray).
+            _moistureSyncTimer += Time.unscaledDeltaTime;
+            PitchGrid grid = _pitchController != null ? _pitchController.Grid : null;
+            if (grid == null || !grid.MoistureDirty || _moistureSyncTimer < _moistureSyncIntervalSeconds)
+            {
+                return;
+            }
+            _moistureSyncTimer = 0f;
+            SyncMoisture(grid);
+        }
+
+        /// <summary>
+        /// Re-uploads CPU moisture into RT_GrassState.B only (ColorMask B), so
+        /// the mower's fine height in R is preserved. Bulk CopyTo avoids
+        /// per-element NativeArray safety checks; bilinear sampling of the
+        /// 0.5 m grid gives soft edges.
+        /// </summary>
+        private void SyncMoisture(PitchGrid grid)
+        {
+            _syncStopwatch.Restart();
+            int count = grid.CellCount;
+            if (_moistureTexture == null)
+            {
+                _moistureTexture = new Texture2D(grid.Width, grid.Height, TextureFormat.R8, false, true)
+                {
+                    name = "MoistureSync",
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+                _cellCopy = new CellState[count];
+                _moistureBytes = new byte[count];
+            }
+
+            grid.Cells.CopyTo(_cellCopy);
+            for (int i = 0; i < count; i++)
+            {
+                _moistureBytes[i] = _cellCopy[i].Moisture;
+            }
+            _moistureTexture.SetPixelData(_moistureBytes, 0);
+            _moistureTexture.Apply(false);
+            Graphics.Blit(_moistureTexture, GrassStateRt, _moistureSyncMaterial);
+
+            grid.ClearMoistureDirty();
+            _syncStopwatch.Stop();
+            LastMoistureSyncMs = _syncStopwatch.Elapsed.TotalMilliseconds;
         }
 
         /// <summary>
@@ -145,6 +213,8 @@ namespace Greenkeeper.Pitch
 
         private void LateUpdate()
         {
+            TrySyncMoisture();
+
             LastStampCount = _queue.Count;
             if (_queue.Count == 0)
             {
@@ -227,6 +297,14 @@ namespace Greenkeeper.Pitch
             if (_paintFadeMaterial != null)
             {
                 Destroy(_paintFadeMaterial);
+            }
+            if (_moistureSyncMaterial != null)
+            {
+                Destroy(_moistureSyncMaterial);
+            }
+            if (_moistureTexture != null)
+            {
+                Destroy(_moistureTexture);
             }
             if (_quad != null)
             {

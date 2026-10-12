@@ -75,9 +75,7 @@ namespace Greenkeeper.Debugging
 
         private void OnGUI()
         {
-            string tool = _toolController != null
-                ? (_toolController.MowerActive ? "Mower" : "Liner")
-                : "-";
+            string tool = _toolController != null ? _toolController.CurrentToolName : "-";
             int strokeCount = _toolController != null && _toolController.Liner != null
                 ? _toolController.Liner.Strokes.Count
                 : 0;
