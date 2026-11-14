@@ -40,6 +40,19 @@ Bu repo iki otorite dokümanına bağlıdır. Her oturumda göreve başlamadan i
 - Yeni Unity paketi / 3rd party bağımlılık eklemek **onay gerektirir**.
 - Her mantık değişikliğinde ilgili EditMode testlerini çalıştır; kırmızı test bırakma.
 
+## Doğrulama (Unity CLI)
+
+Doğrulama artık açık Editor üzerinden Unity CLI + `com.unity.pipeline` ile yapılır. Batchmode yalnız Editor kapalıyken (veya CI'da) yedektir.
+
+1. **Bağlantı:** `unity status --until-ready --project-path C:\SimulatorProject` → state `ready` olmalı. Bağlanamazsa önce Safe Mode'u ele (`unity pipeline list`); sessizce batchmode'a ya da elle dosya düzenlemeye geçme, durumu bildir.
+2. **Derleme:** `unity recompile --project-path C:\SimulatorProject` → 0 hata.
+3. **EditMode testleri:** `unity command "test run" --detach --project-path C:\SimulatorProject -- --mode editor`, ardından `unity job wait <jobId> --timeout 600` → `Failed: 0`. (`unity test` Editor açıkken proje kilidine takılır; yalnız Editor kapalıyken kullanılır.)
+4. **Play kontrolü** (sahne/oynanış değişikliklerinde): `scene open` Boot → `editor.playmode start` → `unity status --until-ready` → `job wait` ile `UnityEngine.Time.frameCount` değişimi (donma kontrolü) → `console get -- --level warn --since <cursor>` → `editor.playmode stop`. Console'u temizleme; imleçle yalnız yeni girdileri oku.
+5. Komut adları paket sürümüyle değişir: kullanmadan önce `unity command --query <terim> --detail full` ile doğrula. Editor parametreleri `--` ayracından sonra yazılır.
+6. Kullanıcının açık sahnesinde kaydedilmemiş değişiklik varsa sahne açmadan önce sor (`scene list_open` → `isDirty`).
+7. **Paket/manifest değişikliğinden sonra** açık Editor değişikliği ancak penceresi odaklanınca yükler (`unity status` → `STATUS_PIPELINE_LOAD_PENDING`). Bu durumda kullanıcıdan Unity penceresine tıklamasını iste, ardından `unity status --until-ready` ile bekle.
+8. **CLI binary'sini onaysız güncelleme** (`unity self-update`). Güncelleme bildirimi görürsen kullanıcıya ilet, kararı ona bırak.
+
 ## Çalışma Akışı
 
 1. Görev aldığında önce ilgili TDD bölümünü ve aktif blok tanımını özetle, planını kısaca sun, sonra uygula.
