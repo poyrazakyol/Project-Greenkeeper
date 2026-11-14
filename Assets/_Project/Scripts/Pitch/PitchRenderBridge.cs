@@ -255,7 +255,11 @@ namespace Greenkeeper.Pitch
 
         private static RenderTexture CreateRt(string rtName, int size, RenderTextureFormat format)
         {
-            var rt = new RenderTexture(size, size, 0, format)
+            // Every pitch RT holds data (height, health, coverage), not color.
+            // In this Linear-space project the default for 8-bit formats is
+            // sRGB: R8 became R8_SRGB, which D3D12 lacks, so it silently fell
+            // back to RGBA8_SRGB (4x memory) and gamma-encoded paint coverage.
+            var rt = new RenderTexture(size, size, 0, format, RenderTextureReadWrite.Linear)
             {
                 name = rtName,
                 useMipMap = false,

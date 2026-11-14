@@ -19,13 +19,17 @@ namespace Greenkeeper.Tests
             Assert.That(shader, Is.Not.Null, "Greenkeeper/PitchPaintFade shader not found.");
             var material = new Material(shader);
 
-            // Linear RTs so the subtract is validated as exact arithmetic,
-            // free of sRGB gamma round-trips on clear/sample/store.
+            // Same linear format as the production RT_Paint (PitchRenderBridge
+            // creates every pitch RT with RenderTextureReadWrite.Linear).
             var source = new RenderTexture(Size, Size, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
             var dest = new RenderTexture(Size, Size, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
             var readback = new Texture2D(Size, Size, TextureFormat.RGBA32, false, linear: true);
             source.Create();
             dest.Create();
+            // Graphics.Blit leaves its destination as RenderTexture.active;
+            // restore the caller's target before releasing, or Unity warns
+            // about releasing the active render texture.
+            RenderTexture originalActive = RenderTexture.active;
 
             try
             {
@@ -48,6 +52,7 @@ namespace Greenkeeper.Tests
             }
             finally
             {
+                RenderTexture.active = originalActive;
                 Object.DestroyImmediate(material);
                 Object.DestroyImmediate(readback);
                 source.Release();
