@@ -58,7 +58,7 @@ namespace Greenkeeper.Gameplay
         {
             // Equip stays in Start: the context touches scene-wired Pitch
             // components whose own Awakes must have run.
-            _mowerVisual = BuildPlaceholderMowerVisual();
+            _mowerVisual = BuildMowerVisual();
             _linerVisual = BuildPlaceholderLinerVisual();
             _hoseVisual = BuildPlaceholderHoseVisual();
             CurrentTool.OnEquip(BuildContext());
@@ -183,8 +183,29 @@ namespace Greenkeeper.Gameplay
         }
 
         /// <summary>
-        /// Crude primitive push mower so the sweep location reads on screen.
-        /// Real model, animation and feel pass arrive with F0.7.
+        /// Mower model from the tool definition (TDD §5.3 "model prefab"). The
+        /// prefab root sits on the cut anchor, mowForwardOffsetM ahead, same
+        /// spot as the old placeholder; the model's own offset (handle in view,
+        /// ART_DIRECTION §4) lives inside the prefab, so cut logic never moves.
+        /// Visual only: the prefab carries no colliders (it would block the
+        /// player's own CharacterController).
+        /// </summary>
+        private Transform BuildMowerVisual()
+        {
+            if (_mowerDefinition.modelPrefab == null)
+            {
+                return BuildPlaceholderMowerVisual();
+            }
+            GameObject instance = Instantiate(_mowerDefinition.modelPrefab, transform, false);
+            instance.name = "MowerVisual";
+            instance.transform.localPosition = new Vector3(0f, 0f, _mowerDefinition.mowForwardOffsetM);
+            instance.transform.localRotation = Quaternion.identity;
+            return instance.transform;
+        }
+
+        /// <summary>
+        /// Crude primitive push mower — fallback when the definition has no
+        /// model prefab (scenes/tests without art).
         /// </summary>
         private Transform BuildPlaceholderMowerVisual()
         {

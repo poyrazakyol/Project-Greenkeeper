@@ -15,6 +15,10 @@ namespace Greenkeeper.Tools
         [Header("Identity")]
         public string toolName = "Push Mower";
 
+        [Header("Visual")]
+        [Tooltip("Model prefab (TDD §5.3). Its root is the cut anchor: placed mowForwardOffsetM ahead of the player; the art offset lives inside the prefab. Empty = primitive placeholder.")]
+        public GameObject modelPrefab;
+
         [Header("Mowing")]
         [Tooltip("Cut swath width in meters (capsule sweep diameter).")]
         public float mowWidthM = 0.5f;

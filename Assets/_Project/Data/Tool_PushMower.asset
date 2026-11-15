@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Tool_PushMower
   m_EditorClassIdentifier: Greenkeeper.Tools::Greenkeeper.Tools.ToolDefinitionSO
   toolName: Push Mower
+  modelPrefab: {fileID: 8199228868887117400, guid: 285c488bf628a0b4f8fc75d21a4fe631, type: 3}
   mowWidthM: 0.5
   mowForwardOffsetM: 0.7
   cutHeightStepsMm:
@@ -32,5 +33,9 @@ MonoBehaviour:
   scalpingCutThresholdMm: 20
   scalpingHealthDamage: 15
   progressToleranceMm: 2
+  engineLoopClip: {fileID: 0}
+  cuttingLoopClip: {fileID: 0}
+  basketFullClip: {fileID: 0}
+  cutRateFullScaleMmPerSec: 100
   unlockTier: 1
   price: 0

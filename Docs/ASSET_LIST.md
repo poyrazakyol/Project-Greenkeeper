@@ -12,7 +12,7 @@ Oyuncunun sürekli birinci şahıs gördüğü nesneler; görsel kalitenin en ç
 
 | # | Nesne | Yol | Bütçe | Not | Durum |
 |---|---|---|---|---|---|
-| 1 | İtme çim biçme makinesi | Tripo | 3–8k | Mevcut kutu+silindir yer tutucunun yerine. Arka toplama sepeti görünür olmalı (sepet mekaniği). | Bekliyor |
+| 1 | İtme çim biçme makinesi | Tripo | 3–8k | Mevcut kutu+silindir yer tutucunun yerine. Arka toplama sepeti görünür olmalı (sepet mekaniği). Sepetin üstü açık (Tripo); diğer aletlerden sonra Blender'da kapatılacak. | Oyunda ✅ |
 | 2 | Çizgi arabası (line marker) | Tripo | 3–8k | Tek tekerli veya iki tekerli boya arabası, üstte boya tankı. | Bekliyor |
 | 3 | Hortum + tabanca ucu | Tripo | 2–5k | Birinci şahısta yalnız tabanca ucu görünür; hortum gövdesi kısa bir parça. | Bekliyor |
 | 4 | Hortum makarası | Tripo | 2–4k | Saha kenarında sabit sahne nesnesi. | Bekliyor |
@@ -62,4 +62,4 @@ Her model için kısa not: kullanılan prompt, kaç varyant denendi, Blender'da 
 
 | Tarih | Nesne | Not |
 |---|---|---|
-| — | — | — |
+| 2026-11-15 | İtme çim biçme makinesi | Tripo Akıllı Ağ P2.0, 4 varyant; AI doku 2. denemede; tekerlekler Blender script'iyle silindire çevrildi. 6.100 üçgen, 2048² albedo, 2 materyal (M_PushMower, M_Tire). Tripo dokusu JPEG, .jpg olarak tutuldu. |

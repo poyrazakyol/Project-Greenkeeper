@@ -16,6 +16,17 @@
 
 Faz 0 sorusu "Biçmek keyifli mi?" → **evet.** MVP'ye geçiş Poyraz onayıyla verildi (2026-06-12); aktif blok M.1.
 
+## TDD v1.2 Revizyon Notları
+
+> TDD metnine bir sonraki revizyonda işlenecek sapma/genişlemeler. Her madde tek satır + kaynak blok.
+
+- §4.4: Hortum GPU stamp yazmıyor; nem CPU'dan PitchMoistureSync ile senkronlanıyor (M.3)
+- §3.2/§3.3: LineGuide offset-field dokusu (RG16 2048²) ve OnLineGuidanceChanged kanalı eksik (M.3.5)
+- §3.3: Çim yapraklarında boya örneklemesi (view-ray projeksiyonu), RT_Paint Linear + mip zinciri eksik (M.3.5)
+- MSAA 4x (URP asset) (M.3.5)
+- Doğrulama akışı: Unity CLI (CLAUDE.md) (M.3.5 sonrası)
+- Git LFS kullanılmıyor; varlıklar küçük, normal git (art/push-mower)
+
 ## Tamamlanan Bloklar
 
 | Blok | Kapanış Tarihi | Not                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
