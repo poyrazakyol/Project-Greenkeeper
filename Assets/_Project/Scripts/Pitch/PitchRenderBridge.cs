@@ -30,6 +30,12 @@ namespace Greenkeeper.Pitch
         [Tooltip("Minimum real-time interval between moisture re-uploads while the grid is dirty.")]
         [SerializeField] private float _moistureSyncIntervalSeconds = 0.1f;
 
+        [Header("Paint mips (M.3.5 — distant lines stay solid)")]
+        [Tooltip("Minimum real-time interval between RT_Paint mip rebuilds while a stroke is being painted. Mips are also rebuilt once as soon as painting stops.")]
+        [SerializeField] private float _paintMipIntervalSeconds = 0.1f;
+        [Tooltip("Anisotropic filtering of RT_Paint on the ground (grazing-angle lines).")]
+        [SerializeField] private int _paintAnisoLevel = 8;
+
         public RenderTexture GrassStateRt { get; private set; }
         public RenderTexture PatternRt { get; private set; }
         public RenderTexture PaintRt { get; private set; }
@@ -38,6 +44,8 @@ namespace Greenkeeper.Pitch
         public double LastBuildExecuteMs { get; private set; }
         /// <summary>CPU cost of the last moisture re-upload (F2 HUD).</summary>
         public double LastMoistureSyncMs { get; private set; }
+        /// <summary>RT_Paint mip rebuilds since startup (debug: confirms the throttle).</summary>
+        public int PaintMipRebuildCount { get; private set; }
 
         /// <summary>
         /// Cached delegate for ToolContext so per-frame context building does
@@ -64,6 +72,8 @@ namespace Greenkeeper.Pitch
         private CellState[] _cellCopy;
         private byte[] _moistureBytes;
         private float _moistureSyncTimer;
+        private bool _paintMipsDirty;
+        private float _paintMipTimer;
 
         private void Awake()
         {
@@ -72,7 +82,10 @@ namespace Greenkeeper.Pitch
 
             GrassStateRt = CreateRt("RT_GrassState", _grassStateSize, RenderTextureFormat.ARGBHalf);
             PatternRt = CreateRt("RT_Pattern", _patternSize, RenderTextureFormat.RGHalf);
-            PaintRt = CreateRt("RT_Paint", _paintSize, RenderTextureFormat.R8);
+            // RT_Paint carries a mip chain: a 12 cm line is thinner than a
+            // pixel beyond ~12 m, so unfiltered sampling breaks it into dots.
+            // Mips are rebuilt by hand (throttled), never per stamp.
+            PaintRt = CreateRt("RT_Paint", _paintSize, RenderTextureFormat.R8, true, _paintAnisoLevel);
 
             _resolvedBrushShader = _brushShader != null ? _brushShader : Shader.Find("Greenkeeper/PitchBrush");
             _propertyBlock = new MaterialPropertyBlock();
@@ -90,6 +103,9 @@ namespace Greenkeeper.Pitch
             Shader.SetGlobalTexture("_PatternRt", PatternRt);
             Shader.SetGlobalTexture("_PaintRt", PaintRt);
             Shader.SetGlobalVector("_PitchUvTransform", Bounds.UvTransform);
+            // World size of one RT_Paint texel: lets the blade vertex stage
+            // pick a mip level from its on-screen footprint.
+            Shader.SetGlobalFloat("_PaintTexelM", Bounds.Size.x / _paintSize);
         }
 
         private void Start()
@@ -190,10 +206,40 @@ namespace Greenkeeper.Pitch
                 return;
             }
             _paintFadeMaterial.SetFloat(FadeAmountId, amount01);
-            RenderTexture temp = RenderTexture.GetTemporary(PaintRt.descriptor);
+            RenderTextureDescriptor descriptor = PaintRt.descriptor;
+            descriptor.useMipMap = false; // scratch copy of mip 0 only
+            RenderTexture temp = RenderTexture.GetTemporary(descriptor);
             Graphics.Blit(PaintRt, temp, _paintFadeMaterial);
             Graphics.Blit(temp, PaintRt);
             RenderTexture.ReleaseTemporary(temp);
+            RebuildPaintMips(); // once per day-end, no throttle needed
+        }
+
+        /// <summary>
+        /// Rebuilds the RT_Paint mip chain when paint changed, at most every
+        /// _paintMipIntervalSeconds while stamps keep arriving and once
+        /// immediately on the first frame without paint stamps (stroke end).
+        /// Mip 0 is always current, so close-up paint never lags.
+        /// </summary>
+        private void UpdatePaintMips(bool paintedThisFrame)
+        {
+            _paintMipTimer += Time.unscaledDeltaTime;
+            if (!_paintMipsDirty)
+            {
+                return;
+            }
+            if (!paintedThisFrame || _paintMipTimer >= _paintMipIntervalSeconds)
+            {
+                RebuildPaintMips();
+            }
+        }
+
+        private void RebuildPaintMips()
+        {
+            PaintRt.GenerateMips();
+            _paintMipsDirty = false;
+            _paintMipTimer = 0f;
+            PaintMipRebuildCount++;
         }
 
         public RenderTexture GetTexture(PitchRenderTarget target)
@@ -219,14 +265,17 @@ namespace Greenkeeper.Pitch
             if (_queue.Count == 0)
             {
                 LastBuildExecuteMs = 0.0;
+                UpdatePaintMips(false);
                 return;
             }
 
+            bool paintedThisFrame = false;
             _stopwatch.Restart();
             _commandBuffer.Clear();
             for (int i = 0; i < _queue.Count; i++)
             {
                 StampRequest stamp = _queue[i];
+                paintedThisFrame |= stamp.Target == PitchRenderTarget.Paint;
                 PitchStampRenderer.AppendStamp(
                     _commandBuffer, GetTexture(stamp.Target), _quad,
                     GetMaterialForState(stamp.EffectiveMask, stamp.BlendOp), _propertyBlock,
@@ -237,6 +286,9 @@ namespace Greenkeeper.Pitch
 
             _queue.Clear();
             LastBuildExecuteMs = _stopwatch.Elapsed.TotalMilliseconds;
+
+            _paintMipsDirty |= paintedThisFrame;
+            UpdatePaintMips(paintedThisFrame);
         }
 
         private Material GetMaterialForState(ColorWriteMask mask, BlendOp blendOp)
@@ -253,7 +305,8 @@ namespace Greenkeeper.Pitch
             return material;
         }
 
-        private static RenderTexture CreateRt(string rtName, int size, RenderTextureFormat format)
+        private static RenderTexture CreateRt(string rtName, int size, RenderTextureFormat format,
+            bool manualMips = false, int anisoLevel = 0)
         {
             // Every pitch RT holds data (height, health, coverage), not color.
             // In this Linear-space project the default for 8-bit formats is
@@ -262,9 +315,11 @@ namespace Greenkeeper.Pitch
             var rt = new RenderTexture(size, size, 0, format, RenderTextureReadWrite.Linear)
             {
                 name = rtName,
-                useMipMap = false,
+                useMipMap = manualMips,
+                autoGenerateMips = false,
                 wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear
+                filterMode = manualMips ? FilterMode.Trilinear : FilterMode.Bilinear,
+                anisoLevel = anisoLevel
             };
             rt.Create();
             return rt;
@@ -279,6 +334,7 @@ namespace Greenkeeper.Pitch
             ClearTarget(PaintRt);
             Graphics.ExecuteCommandBuffer(_commandBuffer);
             _commandBuffer.Clear();
+            PaintRt.GenerateMips(); // cleared chain: every level starts at zero
         }
 
         private void ClearTarget(RenderTexture rt)

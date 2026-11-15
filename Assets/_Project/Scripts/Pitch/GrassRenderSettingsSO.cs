@@ -104,6 +104,14 @@ namespace Greenkeeper.Pitch
         [Range(0f, 1f)] public float groundSpecStrength = 0.2f;
         public float groundSpecPower = 16f;
 
+        [Header("Line paint on blades (M.3.5)")]
+        [Tooltip("How white a blade over painted ground gets (0 = paint only on the ground, 1 = fully painted).")]
+        [Range(0f, 1f)] public float paintBladeStrength = 1f;
+        [Tooltip("Where a blade looks up its paint: 0 = at its root, 1 = at the ground point it visually covers (view-ray projection). 1 keeps lines solid at grazing angles, where blades hide the ground behind them.")]
+        [Range(0f, 1f)] public float paintViewProjection01 = 1f;
+        [Tooltip("Bias on the distance-based RT_Paint mip level blades sample: negative = crisper but more speckle far away, positive = smoother but fainter.")]
+        [Range(-3f, 3f)] public float paintBladeMipBias = 0f;
+
         [Header("Idle sway (cheap vertex-only)")]
         public float swayAmplitudeM = 0.008f;
         public float swayFrequency = 1.6f;

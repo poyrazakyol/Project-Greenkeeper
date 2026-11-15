@@ -98,8 +98,14 @@ namespace Greenkeeper.Pitch
 
             // Penalty arc (the "D"): full circle around the spot, kept only
             // outside the penalty box (|x| < |boxInnerX|).
+            // The sweep starts on the side facing the goal line, so the kept
+            // part (facing midfield) is one contiguous run. Starting at 0° for
+            // the -X end would split it across the wrap-around and join the
+            // two halves with a false chord next to the box line.
             float spotX = sign * (halfL - PenaltySpotDistanceM);
-            Vector2[] full = Arc(new Vector2(spotX, 0f), PenaltyArcRadiusM, 0f, 360f, spacing);
+            float sweepStartDeg = sign > 0f ? 0f : -180f;
+            Vector2[] full = Arc(new Vector2(spotX, 0f), PenaltyArcRadiusM,
+                sweepStartDeg, sweepStartDeg + 360f, spacing);
             var outside = new List<Vector2>();
             foreach (Vector2 p in full)
             {

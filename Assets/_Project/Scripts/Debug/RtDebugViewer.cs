@@ -16,10 +16,13 @@ namespace Greenkeeper.Debugging
             None,
             GrassState,
             Pattern,
-            Paint
+            Paint,
+            LineGuide
         }
 
         [SerializeField] private PitchRenderBridge _bridge;
+        [Tooltip("Static ghost guide mask (M.3.5) — a Texture2D, shown as the last F4 view.")]
+        [SerializeField] private PitchLineGuide _lineGuide;
         [SerializeField] private int _viewSizePx = 360;
 
         private RtView _view = RtView.None;
@@ -40,11 +43,12 @@ namespace Greenkeeper.Debugging
                 return;
             }
 
-            RenderTexture rt = _view switch
+            Texture rt = _view switch
             {
                 RtView.GrassState => _bridge.GrassStateRt,
                 RtView.Pattern => _bridge.PatternRt,
-                _ => _bridge.PaintRt
+                RtView.Paint => _bridge.PaintRt,
+                _ => _lineGuide != null ? _lineGuide.GuideTexture : null
             };
             if (rt == null)
             {
@@ -61,7 +65,7 @@ namespace Greenkeeper.Debugging
             var labelRect = new Rect(rect.x, rect.y - 26f, _viewSizePx, 22f);
             GUI.Box(labelRect, GUIContent.none);
             GUI.Label(new Rect(labelRect.x + 6f, labelRect.y + 2f, labelRect.width - 12f, 18f),
-                $"[F4] {rt.name}  {rt.width}x{rt.height} {rt.format}");
+                $"[F4] {rt.name}  {rt.width}x{rt.height} {rt.graphicsFormat}");
         }
     }
 }

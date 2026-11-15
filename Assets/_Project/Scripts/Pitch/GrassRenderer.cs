@@ -83,6 +83,9 @@ namespace Greenkeeper.Pitch
             _material.SetFloat("_SpecStrength", _settings.bladeSpecStrength);
             _material.SetFloat("_SpecPower", _settings.bladeSpecPower);
             _material.SetFloat("_StripeAlbedoGain", _settings.stripeAlbedoGain);
+            _material.SetFloat("_PaintBladeStrength", _settings.paintBladeStrength);
+            _material.SetFloat("_PaintViewProjection", _settings.paintViewProjection01);
+            _material.SetFloat("_PaintBladeMipBias", _settings.paintBladeMipBias);
         }
 
         private void PushSharedColorGlobals()

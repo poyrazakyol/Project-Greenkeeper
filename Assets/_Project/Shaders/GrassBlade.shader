@@ -3,7 +3,9 @@
 // buffers. The vertex stage samples RT_GrassState (R: height -> blade scale,
 // G: health / B: moisture -> color, A: damage -> blade cull) and applies a
 // cheap idle sway. Lighting is per-vertex half-Lambert + ambient SH.
-// RT_Pattern sampling (stripe bend) intentionally absent — arrives in F0.6.
+// RT_Pattern drives the stripe bend (F0.6). RT_Paint whitens blades over
+// painted lines and the line guide mask tints them with the ghost color
+// (M.3.5) — both looked up at the ground point the vertex visually covers.
 Shader "Greenkeeper/GrassBlade"
 {
     Properties
@@ -21,6 +23,9 @@ Shader "Greenkeeper/GrassBlade"
         _SpecStrength ("Specular Strength", Range(0, 1)) = 0.25
         _SpecPower ("Specular Power", Float) = 24
         _StripeAlbedoGain ("Stripe Albedo Gain", Range(0, 0.5)) = 0.18
+        _PaintBladeStrength ("Paint On Blades", Range(0, 1)) = 1
+        _PaintViewProjection ("Paint View Projection", Range(0, 1)) = 1
+        _PaintBladeMipBias ("Paint Mip Bias", Range(-3, 3)) = 0
         _LodTintOn ("LOD Debug Tint", Float) = 0
     }
     SubShader
@@ -51,6 +56,15 @@ Shader "Greenkeeper/GrassBlade"
             SAMPLER(sampler_GrassStateRt);
             TEXTURE2D(_PatternRt);
             SAMPLER(sampler_PatternRt);
+            TEXTURE2D(_PaintRt);
+            SAMPLER(sampler_PaintRt);
+            // Ghost guide (M.3.5, globals from PitchLineGuide). Strength 0
+            // (liner not equipped) skips the fetch entirely.
+            TEXTURE2D(_LineGuideTex);
+            SAMPLER(sampler_LineGuideTex);
+            half4 _LineGuideColor;
+            half _LineGuideStrength;
+            float4 _LineGuideParams;    // x: field range, y: half width, z: softness, w: blade half width
             float4 _PitchUvTransform;   // uv = worldXZ * zw + xy
             half4 _GrassHealthyColor;
             half4 _GrassDryColor;
@@ -81,6 +95,10 @@ Shader "Greenkeeper/GrassBlade"
             float _SpecStrength;
             float _SpecPower;
             float _StripeAlbedoGain;
+            float _PaintBladeStrength;
+            float _PaintViewProjection;
+            float _PaintBladeMipBias;
+            float _PaintTexelM;         // global: world size of one RT_Paint texel
             float _LodTintOn;
 
             // Per-draw (MaterialPropertyBlock, one per tile).
@@ -203,7 +221,54 @@ Shader "Greenkeeper/GrassBlade"
                 float2 viewXz = viewDirWS.xz / max(length(viewDirWS.xz), 1e-4);
                 albedo *= 1.0 + _StripeAlbedoGain * dot(bendDir, viewXz);
 
-                output.color = albedo * lighting;
+                half3 color = albedo * lighting;
+
+                // Line overlays (M.3.5). Paint is looked up where the view
+                // ray through this vertex meets the ground, not at the blade
+                // root: at grazing angles a blade hides far more ground than
+                // the 12 cm line it may be rooted in, so root lookup leaves
+                // lines speckled. This way a blade takes the paint of the
+                // ground it covers on screen and lines stay solid, matching
+                // the far band where the ground itself draws them. Close up
+                // the projection is a few cm and converges to the root.
+                float3 cameraWS = _WorldSpaceCameraPos;
+                float rayT = positionWS.y / max(cameraWS.y - positionWS.y, 0.05);
+                float2 coveredXz = positionWS.xz + (positionWS.xz - cameraWS.xz) * rayT;
+                float2 overlayUv = lerp(rootXz, coveredXz, _PaintViewProjection)
+                    * _PitchUvTransform.zw + _PitchUvTransform.xy;
+
+                // Distance mip: the vertex stage has no derivatives, so pick
+                // the RT_Paint level from the ground footprint of one pixel
+                // at this point (geometric mean of its across-view and
+                // along-view extent). Far lines average to a continuous
+                // faint band instead of scattered fully-white blades.
+                float viewDist = distance(cameraWS, positionWS);
+                float pixelAngle = 2.0 / (abs(UNITY_MATRIX_P[1][1]) * _ScreenParams.y);
+                float acrossM = viewDist * pixelAngle;
+                float alongM = acrossM * viewDist / max(cameraWS.y, 0.05);
+                float paintLod = max(log2(sqrt(acrossM * alongM) / _PaintTexelM) + _PaintBladeMipBias, 0.0);
+                half paint = SAMPLE_TEXTURE2D_LOD(_PaintRt, sampler_PaintRt, overlayUv, paintLod).r;
+
+                // Ghost guide first, so paint covers it; it fades out where
+                // the line is already painted (remaining work stays visible).
+                if (_LineGuideStrength > 0.001)
+                {
+                    // Offset field -> distance to the ideal line. Blades are
+                    // sparse, so they use a wider band (w) than the ground's
+                    // thin string — still narrower than a painted line.
+                    float2 guideOffset = (SAMPLE_TEXTURE2D_LOD(_LineGuideTex, sampler_LineGuideTex, overlayUv, 0).rg
+                        * 2.0 - 1.0) * _LineGuideParams.x;
+                    half guide = saturate((_LineGuideParams.w - length(guideOffset)) / _LineGuideParams.z);
+                    color = lerp(color, _LineGuideColor.rgb,
+                        guide * _LineGuideStrength * (1.0 - smoothstep(0.0, 0.5, paint)));
+                }
+
+                // Same white + light model as the PitchGround paint overlay
+                // so the blade/ground band transition stays coherent.
+                half3 paintLit = (halfLambert + 0.15) * lerp(_RootDarken, 1.0, heightFrac);
+                color = lerp(color, paintLit, paint * _PaintBladeStrength);
+
+                output.color = color;
                 return output;
             }
 

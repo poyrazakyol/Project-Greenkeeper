@@ -26,6 +26,10 @@ namespace Greenkeeper.Tools
         [Tooltip("Minimum spacing between recorded stroke points (m); thins the polyline.")]
         public float minStrokePointSpacingM = 0.1f;
 
+        [Header("Line guidance (M.3.5, GDD §4.2 equipment progression)")]
+        [Tooltip("Strength of the ghost guide overlay while this liner is equipped: 0 = none, 1 = full. Amateur gear is weak; higher-tier liners ship a higher value — no code change.")]
+        [Range(0f, 1f)] public float guidanceStrength01 = 0.35f;
+
         [Header("Progression (data only — economy logic arrives at M.7)")]
         public int unlockTier = 1;
         public float price = 0f;

@@ -17,5 +17,6 @@ MonoBehaviour:
   forwardOffsetM: 0.6
   paintStrength: 100
   minStrokePointSpacingM: 0.1
+  guidanceStrength01: 0.35
   unlockTier: 1
   price: 0

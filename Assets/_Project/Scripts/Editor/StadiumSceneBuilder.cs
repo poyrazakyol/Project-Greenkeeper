@@ -43,6 +43,7 @@ namespace Greenkeeper.EditorTools
         private const string CameraNoisePath = "Assets/_Project/Data/CameraNoise_FP.asset";
         private const string GrowthProfilePath = "Assets/_Project/Data/GrassGrowth_Default.asset";
         private const string DayEndedChannelPath = ChannelsDir + "/OnDayEnded.asset";
+        private const string LineGuidanceChannelPath = ChannelsDir + "/OnLineGuidanceChanged.asset";
 
         [MenuItem("Greenkeeper/Build Stadium Scene")]
         public static void Build()
@@ -128,6 +129,12 @@ namespace Greenkeeper.EditorTools
                 AssetDatabase.CreateAsset(
                     ScriptableObject.CreateInstance<DayEndedEventChannelSO>(), DayEndedChannelPath);
                 UnityEngine.Debug.Log("[Greenkeeper] Day ended channel created at " + DayEndedChannelPath);
+            }
+            if (AssetDatabase.LoadAssetAtPath<FloatEventChannelSO>(LineGuidanceChannelPath) == null)
+            {
+                AssetDatabase.CreateAsset(
+                    ScriptableObject.CreateInstance<FloatEventChannelSO>(), LineGuidanceChannelPath);
+                UnityEngine.Debug.Log("[Greenkeeper] Line guidance channel created at " + LineGuidanceChannelPath);
             }
             if (AssetDatabase.LoadAssetAtPath<GrassGrowthProfileSO>(GrowthProfilePath) == null)
             {
@@ -232,6 +239,10 @@ namespace Greenkeeper.EditorTools
                 SetReference(toolController, "_linerDefinition", linerDefinition);
                 var hoseDefinition = AssetDatabase.LoadAssetAtPath<HoseToolDefinitionSO>(HoseDefinitionPath);
                 SetReference(toolController, "_hoseDefinition", hoseDefinition);
+                // Line guidance channel (M.3.5): an asset, so it lives in the prefab.
+                var lineGuidanceChannel =
+                    AssetDatabase.LoadAssetAtPath<FloatEventChannelSO>(LineGuidanceChannelPath);
+                SetReference(toolController, "_lineGuidanceChannel", lineGuidanceChannel);
 
                 // Feel layer (F0.7). CameraFeel._noise is a scene object,
                 // wired on the instance.
@@ -345,8 +356,19 @@ namespace Greenkeeper.EditorTools
             PitchGridOverlay overlay = new GameObject("Debug_PitchOverlay").AddComponent<PitchGridOverlay>();
             SetReference(overlay, "_pitch", pitchController);
 
+            // Ghost line guide (M.3.5): bakes the ideal lines into a static
+            // mask; strength arrives over the guidance channel.
+            var lineLayout = AssetDatabase.LoadAssetAtPath<LineLayoutSO>(LineLayoutPath);
+            var lineGuidanceChannel =
+                AssetDatabase.LoadAssetAtPath<FloatEventChannelSO>(LineGuidanceChannelPath);
+            PitchLineGuide lineGuide = pitchGo.AddComponent<PitchLineGuide>();
+            SetReference(lineGuide, "_lineLayout", lineLayout);
+            SetReference(lineGuide, "_bridge", renderBridge);
+            SetReference(lineGuide, "_guidanceChannel", lineGuidanceChannel);
+
             RtDebugViewer rtViewer = new GameObject("Debug_RtViewer").AddComponent<RtDebugViewer>();
             SetReference(rtViewer, "_bridge", renderBridge);
+            SetReference(rtViewer, "_lineGuide", lineGuide);
 
             GrassDebugControls grassControls =
                 new GameObject("Debug_GrassControls").AddComponent<GrassDebugControls>();
@@ -368,11 +390,11 @@ namespace Greenkeeper.EditorTools
             SetReference(mowHud, "_toolController", toolController);
             SetReference(mowHud, "_progressChannel", progressChannel);
 
-            // Line score debug view (M.2)
-            var lineLayout = AssetDatabase.LoadAssetAtPath<LineLayoutSO>(LineLayoutPath);
+            // Line score debug view (M.2) + guide override readout (M.3.5)
             LineScoreHud lineScoreHud = new GameObject("Debug_LineScoreHud").AddComponent<LineScoreHud>();
             SetReference(lineScoreHud, "_toolController", toolController);
             SetReference(lineScoreHud, "_lineLayout", lineLayout);
+            SetReference(lineScoreHud, "_lineGuide", lineGuide);
 
             // Hose / moisture dose debug view (M.3)
             HoseHud hoseHud = new GameObject("Debug_HoseHud").AddComponent<HoseHud>();

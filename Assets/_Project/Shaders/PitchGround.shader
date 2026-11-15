@@ -36,6 +36,12 @@ Shader "Greenkeeper/PitchGround"
             SAMPLER(sampler_PatternRt);
             TEXTURE2D(_PaintRt);
             SAMPLER(sampler_PaintRt);
+            // Ghost guide (M.3.5, globals from PitchLineGuide).
+            TEXTURE2D(_LineGuideTex);
+            SAMPLER(sampler_LineGuideTex);
+            half4 _LineGuideColor;
+            half _LineGuideStrength;
+            float4 _LineGuideParams;    // x: field range, y: half width, z: softness, w: blade half width
             float4 _PitchUvTransform;
             half4 _GrassHealthyColor;
             half4 _GrassDryColor;
@@ -212,6 +218,23 @@ Shader "Greenkeeper/PitchGround"
                 // Paint lines (M.2): RT_Paint.r is coverage; overlay white,
                 // lit by the same main light so lines sit in the scene.
                 half paint = SAMPLE_TEXTURE2D(_PaintRt, sampler_PaintRt, pitchUv).r;
+
+                // Ghost guide (M.3.5): the ideal lines as a translucent tint,
+                // scaled by the equipped liner's guidance strength and faded
+                // out where the line is already painted.
+                // The texture is an offset field (vector to the nearest ideal
+                // line); its length is the distance, drawn as a thin "taut
+                // string" whose soft edge lies inside the guide width. The
+                // edge never gets sharper than a pixel (fwidth), so the thin
+                // line dims with distance instead of shimmering.
+                float2 guideOffset = (SAMPLE_TEXTURE2D_LOD(_LineGuideTex, sampler_LineGuideTex, pitchUv, 0).rg
+                    * 2.0 - 1.0) * _LineGuideParams.x;
+                float guideDist = length(guideOffset);
+                float guideSoft = max(_LineGuideParams.z, fwidth(guideDist));
+                half guide = saturate((_LineGuideParams.y - guideDist) / guideSoft);
+                lit = lerp(lit, _LineGuideColor.rgb,
+                    guide * _LineGuideStrength * (1.0 - smoothstep(0.0, 0.5, paint)));
+
                 half3 paintColor = half3(1.0, 1.0, 1.0) * (halfLambert + 0.15);
                 lit = lerp(lit, paintColor, paint);
 

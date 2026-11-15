@@ -13,4 +13,5 @@
 | 2026-06-12 | Poyraz | **Sözleşme kabul + ilk maç akışı:** GDD §4.4 sözleşme yapısını tanımlıyor ama oyuncunun bir sözleşmeyi nasıl kabul ettiği, maç gününün nasıl tetiklendiği belirsiz. M.4-M.5 arası doğal yeri olabilir, denetçi sistemiyle birlikte planlanmalı. |
 | 2026-06-12 | Poyraz | **Kayıt/yükleme kullanıcı akışı:** TDD §9 teknik formatı tanımlıyor ama slot seçimi, otomatik/manuel kayıt, ana menüye dönüş gibi kullanıcı tarafı GDD'de yok. M.8'le birlikte ele alınmalı. |
 | 2026-10-13 | Claude Code | Hortum sesi (sprey hışırtısı, debiye bağlı) — M.3 planında bilinçli ertelendi; `HoseTool.SmoothedSprayRate01` sinyali hazır, M.9 his cilasında değerlendirilir |
+| 2026-11-15 | Poyraz | Ayarlar menüsünde MSAA seçeneği (kapalı/2x/4x) — M.9 |
 | 2026-06-12 | Poyraz | **Maç günü risk uyarısı:** saha kötü giderse maç ertelenip itibar kaybı oluyor (GDD), ama oyuncu bu riski önceden nasıl görecek? Bir uyarı/gösterge sistemi gerekebilir. M.4-M.5 denetçi/maç bloklarıyla birlikte değerlendirilmeli. |

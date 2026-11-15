@@ -115,6 +115,29 @@ namespace Greenkeeper.Tests
         }
 
         [Test]
+        public void PenaltyArc_BothEnds_AreContiguousWithoutChord()
+        {
+            // Regression (M.3.5): the -X arc used to wrap around 0°/360° and
+            // join its two halves with a ~14 m chord beside the box line.
+            IdealLine[] arcs = Generate().Where(l => l.Type == LineElementType.PenaltyArc).ToArray();
+            Assert.That(arcs.Length, Is.EqualTo(2));
+            foreach (IdealLine arc in arcs)
+            {
+                float sign = Mathf.Sign(arc.Polyline[0].x);
+                for (int i = 0; i < arc.Polyline.Length - 1; i++)
+                {
+                    float gap = Vector2.Distance(arc.Polyline[i], arc.Polyline[i + 1]);
+                    Assert.That(gap, Is.LessThan(0.3f), $"gap at index {i} on the {sign:+0;-0} end");
+                }
+                foreach (Vector2 p in arc.Polyline)
+                {
+                    Assert.That(Mathf.Abs(p.x), Is.LessThan(36f + 0.001f));
+                    Assert.That((p - new Vector2(sign * 41.5f, 0f)).magnitude, Is.EqualTo(9.15f).Within(0.05f));
+                }
+            }
+        }
+
+        [Test]
         public void Generate_FinerSpacing_ProducesMorePoints()
         {
             int coarse = Generate(0.5f).First(l => l.Type == LineElementType.CenterCircle).Polyline.Length;

@@ -1,3 +1,4 @@
+using Greenkeeper.Core.Events;
 using Greenkeeper.Pitch;
 using Greenkeeper.Tools;
 using UnityEngine;
@@ -19,6 +20,8 @@ namespace Greenkeeper.Gameplay
         [SerializeField] private ToolDefinitionSO _mowerDefinition;
         [SerializeField] private LinerToolDefinitionSO _linerDefinition;
         [SerializeField] private HoseToolDefinitionSO _hoseDefinition;
+        [Tooltip("Announces the equipped tool's line guidance strength (0 when it is not a liner) — M.3.5.")]
+        [SerializeField] private FloatEventChannelSO _lineGuidanceChannel;
 
         public MowerTool Mower { get; private set; }
         public LinerTool Liner { get; private set; }
@@ -60,6 +63,7 @@ namespace Greenkeeper.Gameplay
             _hoseVisual = BuildPlaceholderHoseVisual();
             CurrentTool.OnEquip(BuildContext());
             ApplyVisualForCurrentTool();
+            RaiseLineGuidance();
         }
 
         private void Update()
@@ -128,6 +132,20 @@ namespace Greenkeeper.Gameplay
             CurrentTool = _tools[_currentIndex];
             CurrentTool.OnEquip(ctx);
             ApplyVisualForCurrentTool();
+            RaiseLineGuidance();
+        }
+
+        /// <summary>
+        /// Line guidance is a stat of the liner equipment (GDD §4.2): the
+        /// ghost overlay shows only while a liner is equipped, as strong as
+        /// that liner's definition says. Pitch listens on the channel.
+        /// </summary>
+        private void RaiseLineGuidance()
+        {
+            if (_lineGuidanceChannel != null)
+            {
+                _lineGuidanceChannel.Raise(CurrentTool == Liner ? _linerDefinition.guidanceStrength01 : 0f);
+            }
         }
 
         private void ApplyVisualForCurrentTool()

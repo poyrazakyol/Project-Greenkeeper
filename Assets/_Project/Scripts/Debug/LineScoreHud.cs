@@ -17,6 +17,14 @@ namespace Greenkeeper.Debugging
     {
         [SerializeField] private ToolController _toolController;
         [SerializeField] private LineLayoutSO _lineLayout;
+        [SerializeField] private PitchLineGuide _lineGuide;
+
+        // [H] guide override steps (M.3.5): follow the tool, then forced
+        // off / weak / strong to preview higher-tier guidance.
+        private static readonly float?[] GuideOverrides = { null, 0f, 0.35f, 1f };
+        private static readonly string[] GuideOverrideNames = { "alet", "kapalı", "zayıf", "güçlü" };
+        private int _guideOverrideIndex;
+        private bool _linerEquippedSent;
 
         private string _report = "[L] çizgi skoru  [C] temizle";
 
@@ -36,6 +44,22 @@ namespace Greenkeeper.Debugging
             {
                 _toolController.Liner.ClearStrokes();
                 _report = "Stroke kaydı temizlendi.";
+            }
+            if (_lineGuide != null)
+            {
+                // The override is a liner preview: re-sent whenever the step
+                // or the equipped tool changes, so leaving the liner drops it.
+                bool linerEquipped = _toolController.CurrentTool == _toolController.Liner;
+                bool stepChanged = keyboard.hKey.wasPressedThisFrame;
+                if (stepChanged)
+                {
+                    _guideOverrideIndex = (_guideOverrideIndex + 1) % GuideOverrides.Length;
+                }
+                if (stepChanged || linerEquipped != _linerEquippedSent)
+                {
+                    _linerEquippedSent = linerEquipped;
+                    _lineGuide.SetDebugOverride(GuideOverrides[_guideOverrideIndex], linerEquipped);
+                }
             }
         }
 
@@ -80,11 +104,20 @@ namespace Greenkeeper.Debugging
                 ? _toolController.Liner.Strokes.Count
                 : 0;
 
-            var box = new Rect(8f, Screen.height - 200f, 460f, 160f);
+            bool linerActive = _toolController != null && _toolController.CurrentTool == _toolController.Liner;
+            string guideMode = linerActive
+                ? GuideOverrideNames[_guideOverrideIndex]
+                : $"liner değil; [H] seçimi: {GuideOverrideNames[_guideOverrideIndex]}";
+            string guide = _lineGuide != null
+                ? $"Rehber: %{_lineGuide.EffectiveStrength * 100f:F0} ({guideMode})  [H]   pişirme {_lineGuide.LastBakeMs:F1} ms"
+                : "Rehber: -";
+
+            var box = new Rect(8f, Screen.height - 222f, 460f, 182f);
             GUI.Box(box, GUIContent.none);
             GUI.Label(new Rect(box.x + 8f, box.y + 6f, box.width - 16f, 20f),
                 $"Alet: {tool}  ([Q] değiştir)   Stroke: {strokeCount}");
-            GUI.Label(new Rect(box.x + 8f, box.y + 28f, box.width - 16f, 128f), _report);
+            GUI.Label(new Rect(box.x + 8f, box.y + 28f, box.width - 16f, 20f), guide);
+            GUI.Label(new Rect(box.x + 8f, box.y + 50f, box.width - 16f, 128f), _report);
         }
     }
 }
