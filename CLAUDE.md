@@ -4,12 +4,18 @@ Stadyum çim müdürlüğü simülasyonu. Unity 6 LTS + URP, C#, solo geliştiri
 
 ## Otorite Dokümanları
 
-Bu repo iki otorite dokümanına bağlıdır. Her oturumda göreve başlamadan ilgili bölümleri oku:
+Bu repo aşağıdaki otorite dokümanlarına bağlıdır. Her oturumda göreve başlamadan ilgili bölümleri oku:
 
 - `Docs/GDD_Project_Greenkeeper_v1.2.md` — **tasarım otoritesi** (ne yapıyoruz, neden)
 - `Docs/TDD_Project_Greenkeeper_v1.1.md` — **teknik otorite** (nasıl yapıyoruz)
+- `Docs/ART_DIRECTION.md` — **görsel otorite** (stil; model, materyal, prefab ve arayüz kuralları)
+- `Docs/ASSET_LIST.md` — **asset üretim listesi** (hangi model, hangi bütçe, durum)
 
-Çelişki durumunda: tasarım sorusu → GDD, teknik soru → TDD. Bu dokümanları **asla kendiliğinden değiştirme**; değişiklik gerekiyorsa öner ve onay bekle.
+Model, materyal, prefab ve arayüz işlerinde `ART_DIRECTION.md` ve `ASSET_LIST.md`'ye uyulur.
+
+Çelişki durumunda: tasarım sorusu → GDD, teknik soru → TDD, görsel stil / asset sorusu → ART_DIRECTION. Bu dokümanları **asla kendiliğinden değiştirme**; değişiklik gerekiyorsa öner ve onay bekle.
+
+- **Tek istisna:** `ASSET_LIST.md`'nin **"Durum"** sütunu ve **"Üretim kayıtları"** tablosu, `PROGRESS.md` gibi asset işi sırasında güncellenir. Listenin kapsamı (satırlar, bölümler, "Kapsam dışı") ve bütçeleri onaysız değiştirilmez.
 
 ## Mevcut Durum
 
@@ -62,7 +68,7 @@ Doğrulama artık açık Editor üzerinden Unity CLI + `com.unity.pipeline` ile 
 
 ## Asla Yapma
 
-- GDD/TDD'yi onaysız değiştirme.
+- GDD/TDD/ART_DIRECTION'ı ve ASSET_LIST'in kapsam/bütçe kısmını onaysız değiştirme.
 - Faz disiplinini "madem buradayız" diyerek delme.
 - `Library/`, `Temp/`, `*.csproj` gibi Unity üretimi dosyaları commit'leme (.gitignore'a uy).
 - Test edilmemiş kayıt/yükleme değişikliği bırakma (save bozulması solo projede telafisi en pahalı hatadır).
