@@ -12,7 +12,7 @@ Oyuncunun sürekli birinci şahıs gördüğü nesneler; görsel kalitenin en ç
 
 | # | Nesne | Yol | Bütçe | Not | Durum |
 |---|---|---|---|---|---|
-| 1 | İtme çim biçme makinesi | Tripo | 3–8k | Mevcut kutu+silindir yer tutucunun yerine. Arka toplama sepeti görünür olmalı (sepet mekaniği). Sepetin üstü açık (Tripo); diğer aletlerden sonra Blender'da kapatılacak. | Oyunda ✅ |
+| 1 | İtme çim biçme makinesi | Tripo | 3–8k | Mevcut kutu+silindir yer tutucunun yerine. Arka toplama sepeti görünür olmalı (sepet mekaniği). Sepet kapağı prefab'da (BagLid, M_Tire). Model ofseti 0,45, FOV 60 ile tutamak ~20° aşağı bakışta görünür. | Oyunda ✅ |
 | 2 | Çizgi arabası (line marker) | Tripo | 3–8k | Tek tekerli veya iki tekerli boya arabası, üstte boya tankı. | Bekliyor |
 | 3 | Hortum + tabanca ucu | Tripo | 2–5k | Birinci şahısta yalnız tabanca ucu görünür; hortum gövdesi kısa bir parça. | Bekliyor |
 | 4 | Hortum makarası | Tripo | 2–4k | Saha kenarında sabit sahne nesnesi. | Bekliyor |

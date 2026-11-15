@@ -45,6 +45,21 @@ namespace Greenkeeper.EditorTools
         private const string DayEndedChannelPath = ChannelsDir + "/OnDayEnded.asset";
         private const string LineGuidanceChannelPath = ChannelsDir + "/OnLineGuidanceChanged.asset";
 
+        /// <summary>
+        /// Vertical FOV of the first-person camera. Set explicitly: the
+        /// Cinemachine default (40) hid the held tool until ~30–38° look-down;
+        /// at 60 the mower handle shows at ~20° (art/push-mower comparison).
+        /// </summary>
+        public const float FirstPersonFieldOfView = 60f;
+
+        /// <summary>Lens setup for the first-person camera; applied when the camera is created.</summary>
+        public static void ApplyFirstPersonLens(CinemachineCamera camera)
+        {
+            LensSettings lens = camera.Lens;
+            lens.FieldOfView = FirstPersonFieldOfView;
+            camera.Lens = lens;
+        }
+
         [MenuItem("Greenkeeper/Build Stadium Scene")]
         public static void Build()
         {
@@ -314,6 +329,7 @@ namespace Greenkeeper.EditorTools
             fpCamera.AddComponent<CinemachineHardLockToTarget>();
             fpCamera.AddComponent<CinemachineRotateWithFollowTarget>();
             cinemachineCamera.Follow = cameraTarget;
+            ApplyFirstPersonLens(cinemachineCamera);
 
             // Camera feel noise (F0.7): amplitude is driven by CameraFeel.
             var cameraNoise = fpCamera.AddComponent<CinemachineBasicMultiChannelPerlin>();

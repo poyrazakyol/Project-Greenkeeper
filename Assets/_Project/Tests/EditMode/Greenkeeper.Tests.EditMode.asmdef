@@ -8,6 +8,8 @@
         "Greenkeeper.Pitch",
         "Greenkeeper.Tools",
         "Greenkeeper.Gameplay",
+        "Greenkeeper.EditorTools",
+        "Unity.Cinemachine",
         "Unity.Mathematics"
     ],
     "includePlatforms": [
